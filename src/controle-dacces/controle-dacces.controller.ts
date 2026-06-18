@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { ControleDaccesService } from './controle-dacces.service';
 import { CreateControleDacceDto } from './dto/create-controle-dacce.dto';
 import { UpdateControleDacceDto } from './dto/update-controle-dacce.dto';
