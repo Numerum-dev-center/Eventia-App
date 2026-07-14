@@ -6,13 +6,12 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
-import { Evenement } from 'src/evenement/evenement.entity';
+import { Evenement } from 'src/evenement/entities/evenement.entity';
 import { TicketEmis } from 'src/tickets/entities/ticket-emis.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity()
-export class CategorieTicket {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class CategorieTicket extends BaseEntity {
 
   @Column()
   nom!: string;

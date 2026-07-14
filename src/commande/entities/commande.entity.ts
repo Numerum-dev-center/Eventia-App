@@ -10,11 +10,10 @@ import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
 import { TicketEmis } from 'src/tickets/entities/ticket-emis.entity';
 import { StatutPaiement } from 'src/common/statut-paiement.enum';
 import { Paiement } from 'src/paiement/entities/paiement.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity()
-export class Commande {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class Commande extends BaseEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   montantTotal!: number;

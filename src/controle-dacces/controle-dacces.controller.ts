@@ -31,7 +31,10 @@ export class ControleDaccesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateControleDacceDto: UpdateControleDacceDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateControleDacceDto: UpdateControleDacceDto,
+  ) {
     return this.controleDaccesService.update(+id, updateControleDacceDto);
   }
 

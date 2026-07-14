@@ -8,11 +8,10 @@ import {
 } from 'typeorm';
 import { Commande } from 'src/commande/entities/commande.entity';
 import { StatutPaiement } from 'src/common/statut-paiement.enum';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity('paiements')
-export class Paiement {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class Paiement extends BaseEntity {
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   montant!: number;

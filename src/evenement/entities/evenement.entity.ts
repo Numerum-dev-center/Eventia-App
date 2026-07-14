@@ -8,13 +8,12 @@ import {
 } from 'typeorm';
 
 import { CategorieTicket } from 'src/categorie-ticket/entities/categorie-ticket.entity';
-import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
 import { StatutEvenement } from 'src/common/statut-evenement.enum';
+import { ProfilOrganisateur } from 'src/profil-organisateur/entities/profil-organisateur.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity()
-export class Evenement {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class Evenement extends BaseEntity {
 
   @Column()
   titre!: string;
@@ -54,9 +53,9 @@ export class Evenement {
   statut!: StatutEvenement;
 
   // Relation : un organisateur (Utilisateur) peut créer plusieurs événements
-  @ManyToOne(() => Utilisateur, { eager: true })
-  @JoinColumn({ name: 'organisateur_id' })
-  organisateur!: Utilisateur;
+  @ManyToOne(() => ProfilOrganisateur, (profil) => profil.evenements)
+  @JoinColumn({ name: 'profil_organisateur_id' }) // La clé étrangère est ici !
+  profilOrganisateur!: ProfilOrganisateur;
 
   // Relation : un événement contient plusieurs catégories de tickets
   @OneToMany(() => CategorieTicket, (categorie) => categorie.evenement)

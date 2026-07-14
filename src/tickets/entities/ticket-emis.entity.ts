@@ -11,11 +11,10 @@ import { CategorieTicket } from 'src/categorie-ticket/entities/categorie-ticket.
 import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
 import { StatutValidation } from 'src/common/statut-validation-ticket.enum';
 import { LogValidationBillet } from 'src/controle-dacces/entities/log-validation-billet.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity()
-export class TicketEmis {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class TicketEmis extends BaseEntity {
 
   @Column({ unique: true })
   codeUniqueCrypto!: string;

@@ -1,4 +1,3 @@
-// evenement/dto/create-evenement.dto.ts
 import {
   IsString,
   IsNotEmpty,

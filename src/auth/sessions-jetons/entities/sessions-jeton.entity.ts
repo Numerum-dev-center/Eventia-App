@@ -6,16 +6,12 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 @Entity('sessions_jetons')
-export class SessionsJetons {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class SessionsJetons extends BaseEntity{
 
   @Column()
-  utilisateurId!: string;
-
-  @Column()
-  refreshTokenHash!: string;
+  refresh_token_hash!: string;
 
   @Column()
   appareilInfo!: string;

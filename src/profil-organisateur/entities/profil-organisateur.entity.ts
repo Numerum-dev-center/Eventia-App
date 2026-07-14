@@ -4,14 +4,15 @@ import {
   Column,
   OneToOne,
   JoinColumn,
+  OneToMany,
 } from 'typeorm';
 import { Utilisateur } from '../../utilisateur/entities/utilisateur.entity';
 import { StatutVerification } from 'src/common/statut-verification-profilOrganisateur.enum';
+import { Evenement } from 'src/evenement/entities/evenement.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity('profil_organisateurs')
-export class ProfilOrganisateur {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class ProfilOrganisateur extends BaseEntity {
 
   @Column()
   nomEntreprise!: string;
@@ -40,7 +41,13 @@ export class ProfilOrganisateur {
   @Column()
   utilisateurId!: string;
 
+  @Column()
+  evenementId!: string;
+
   @OneToOne(() => Utilisateur, (utilisateur) => utilisateur.profilOrganisateur)
   @JoinColumn({ name: 'utilisateur_id' })
   utilisateur!: Utilisateur;
+
+  @OneToMany(() => Evenement, (evenement) => evenement.profilOrganisateur) // Note : 'profilOrganisateur' (minuscule)
+  evenements!: Evenement[];
 }

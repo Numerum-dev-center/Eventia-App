@@ -4,14 +4,12 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
-  CreateDateColumn,
 } from 'typeorm';
 import { TicketEmis } from 'src/tickets/entities/ticket-emis.entity';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity('logs_validation')
-export class LogValidationBillet {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class LogValidationBillet extends BaseEntity {
 
   @Column()
   billetId!: string;
@@ -27,9 +25,6 @@ export class LogValidationBillet {
 
   @Column({ nullable: true })
   messageErreur?: string; // Ex: "Billet déjà utilisé"
-
-  @CreateDateColumn()
-  dateValidation!: Date;
 
   @ManyToOne(() => TicketEmis, (billet) => billet.logsValidation)
   @JoinColumn({ name: 'billet_id' })

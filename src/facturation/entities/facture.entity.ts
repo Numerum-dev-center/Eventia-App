@@ -8,11 +8,10 @@ import {
 } from 'typeorm';
 import { Commande } from '../../commande/entities/commande.entity';
 import { StatutFacture } from 'src/common/statut-facture.enum';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity('factures')
-export class Facture {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class Facture extends BaseEntity {
 
   @Column({ unique: true })
   numeroFacture!: string; // Ex: FAC-2026-0001 (Doit être généré logiquement)

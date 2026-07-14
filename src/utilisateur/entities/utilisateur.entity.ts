@@ -6,22 +6,42 @@ import {
   OneToMany,
 } from 'typeorm';
 import { ProfilOrganisateur } from 'src/profil-organisateur/entities/profil-organisateur.entity';
-import { Evenement } from 'src/evenement/evenement.entity';
+import { Evenement } from 'src/evenement/entities/evenement.entity';
 import { Commande } from 'src/commande/entities/commande.entity';
 import { SessionsJetons } from 'src/auth/sessions-jetons/entities/sessions-jeton.entity';
 import { LogsAudit } from 'src/logs-audit/entities/logs-audit.entity';
 import { Role } from 'src/common/role.enum';
+import { Sexe } from 'src/common/sexe.enum';
+import { BaseEntity } from 'src/common/entities/base.entity';
 
 @Entity()
-export class Utilisateur {
-  @PrimaryGeneratedColumn('uuid')
-  id!: string;
+export class Utilisateur extends BaseEntity {
 
   @Column({ unique: true })
   email!: string;
 
   @Column()
-  motDePasseHash!: string;
+  motDePasse!: string;
+
+  @Column()
+  nom!: string;
+
+  @Column()
+  prenoms!: string;
+
+  @Column( {type: 'enum',
+    enum: Sexe,
+    default: Sexe.MASCULIN})
+  sexe!: Sexe;
+
+  @Column()
+  dateDeNaissance!: Date;
+
+  @Column()
+  telephone?: string;
+
+  @Column()
+  adresse?: string;
 
   @Column({
     type: 'enum',
@@ -31,19 +51,25 @@ export class Utilisateur {
   role!: Role;
 
   @Column({ default: false })
-  estVerifie!: boolean;
+  estActif!: boolean;
 
-  @Column({ nullable: true })
-  code2faSecret?: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  code2faSecret!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  dateExpirationCode!: Date | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  resetPasswordCode!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetPasswordExpires!: Date | null;
 
   @Column({ default: 0 })
   tentativesConnexion!: number;
 
   @Column({ type: 'timestamp', nullable: true })
-  compteBloqueJusqua?: Date;
-
-  @Column({ type: 'timestamp' })
-  dateCreation!: Date;
+  compteBloqueJusqua!: Date;
 
   @Column({ type: 'timestamp', nullable: true })
   derniereConnexion?: Date;
@@ -53,7 +79,7 @@ export class Utilisateur {
   profilOrganisateur?: ProfilOrganisateur;
 
   // Relation : un organisateur (utilisateur) organise plusieurs événements (Organise)
-  @OneToMany(() => Evenement, (evenement) => evenement.organisateur)
+  @OneToMany(() => Evenement, (evenement) => evenement.profilOrganisateur)
   evenements?: Evenement[];
 
   // Relation : un client (utilisateur) passe plusieurs commandes (Passe)

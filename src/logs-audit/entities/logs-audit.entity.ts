@@ -4,31 +4,35 @@ import {
   Column,
   ManyToOne,
   JoinColumn,
+  CreateDateColumn,
 } from 'typeorm';
 import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
 
 @Entity('logs_audit')
 export class LogsAudit {
-  @PrimaryGeneratedColumn('increment') // Utilisera BigInt dans PostgreSQL
-  id!: number;
+  @PrimaryGeneratedColumn('uuid')
+  id!: string;
 
   @Column()
-  utilisateurId!: string;
+  targetEntity!: string; // Ex: 'Evenement'
 
   @Column()
-  action!: string;
-
-  @Column({ type: 'text' })
-  description!: string;
+  targetId!: string; // L'ID de l'événement modifié
 
   @Column()
-  adresseIp!: string;
+  action!: string; // 'INSERT', 'UPDATE', 'DELETE'
 
-  @Column({ type: 'timestamp' })
-  dateAction!: Date;
+  @Column({ type: 'jsonb' })
+  changes!: any; // Ce qui a été modifié
+
+  @Column({ nullable: true })
+  userId!: string; // Qui a fait l'action
+
+  @CreateDateColumn()
+  createdAt!: Date;
 
   // Relation : Plusieurs logs sont générés par un utilisateur
-  @ManyToOne(() => Utilisateur, (utilisateur) => utilisateur.logsAudit)
+  @ManyToOne(() => Utilisateur, { onDelete: 'SET NULL', nullable: true })
   @JoinColumn({ name: 'utilisateur_id' })
   utilisateur!: Utilisateur;
 }
