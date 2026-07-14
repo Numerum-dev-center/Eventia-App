@@ -1,3 +1,8 @@
+const crypto = require('crypto');
+if (!(global as any).crypto) {
+  (global as any).crypto = crypto;
+}
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
@@ -19,10 +24,7 @@ async function bootstrap() {
 }
 
   app.enableCors({
-    origin: [
-      'https://ton-domaine.com', 
-      'https://admin.ton-domaine.com'
-    ], 
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['http://localhost:3000'], 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true, // Nécessaire si tu utilises des cookies ou sessions
     allowedHeaders: 'Content-Type, Authorization',

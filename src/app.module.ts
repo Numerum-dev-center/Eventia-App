@@ -23,7 +23,6 @@ import { UserContextMiddleware } from './common/middlewares/user-context.middlew
 
 
 
-
 @Module({
   imports: [
     EvenementModule,
@@ -46,13 +45,15 @@ import { UserContextMiddleware } from './common/middlewares/user-context.middlew
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST'),
-        port: config.get<number>('DB_PORT'),
-        username: config.get<string>('DB_USER'),
-        password: config.get<string>('DB_PASSWORD'),
-        database: config.get<string>('DB_NAME'),
+        url: process.env.DATABASE_URL, // C'est ici que tu mets l'URL d'Aiven
         autoLoadEntities: true,
-        synchronize: true,
+        synchronize: true, // À passer à 'false' en production !
+        ssl: true,
+        extra: {
+          ssl: {
+            rejectUnauthorized: false, // On force ici aussi pour être sûr que le driver PG le prenne
+          },
+        },
         logging: true,
         subscribers: [AuditSubscriber],
       }),
