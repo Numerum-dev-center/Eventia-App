@@ -18,17 +18,19 @@ import { GetUser } from './decorators/get-user.decorator';
 import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Request, Response } from 'express';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiCookieAuth, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InscriptionDto } from 'src/utilisateur/dto/inscription.dto';
 import { Role } from 'src/common/role.enum';
 import { AuthGuard } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService, 
-    private readonly utilisateurService: UtilisateurService
+    private readonly utilisateurService: UtilisateurService,
+    private readonly configService: ConfigService
   ) {}
 
   @Public() 
@@ -62,30 +64,45 @@ export class AuthController {
   @Get('google')
   @Public() // Très important : doit être accessible sans token
   @UseGuards(AuthGuard('google'))
+  @ApiOperation({ 
+    summary: 'Initier la connexion avec Google', 
+    description: 'Redirige l\'utilisateur vers la page de consentement Google. Ne pas tester directement dans Swagger (provoque une erreur CORS).' 
+  })
+  @ApiResponse({ status: 302, description: 'Redirection vers Google.' })
   async googleAuth() {
     // Cette fonction ne sera jamais exécutée, Passport intercepte la requête
   }
 
   @Get('google/callback')
-@Public()
-@UseGuards(AuthGuard('google'))
-async googleAuthRedirect(@Req() req, @Res() res) {
+  @Public()
+  @UseGuards(AuthGuard('google'))
+  @ApiExcludeEndpoint()
+  @ApiOperation({ 
+    summary: 'Callback Google OAuth', 
+    description: 'Endpoint appelé par Google après l\'authentification. Génère les tokens et redirige vers le frontend.' 
+  })
+  @ApiResponse({ status: 302, description: 'Redirection vers le Front-end avec accessToken et refreshToken dans l\'URL.' })
+  async googleAuthRedirect(@Req() req, @Res() res) {
   // 1. Validation de l'utilisateur Google
   const user = await this.authService.validateGoogleUser(req.user);
   
   // 2. Génération de la paire de tokens
   const { accessToken, refreshToken } = await this.authService.generateTokens(user, req);
   
+  const frontendUrl = this.configService.get<string>('FRONTEND_URL');
   // 3. Redirection vers le Front avec les tokens
   // On passe les deux tokens en query params
   res.redirect(
-    `http://localhost:4200/auth/success?accessToken=${accessToken}&refreshToken=${refreshToken}`
+    `${frontendUrl}/auth/success?accessToken=${accessToken}&refreshToken=${refreshToken}`
   );
 }
 
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Demander un email de réinitialisation de mot de passe' })
+  @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string', example: 'user@example.com' } } } })
+  @ApiResponse({ status: 200, description: 'Email envoyé avec succès.' })
   async forgotPassword(@Body('email') email: string) {
     return await this.utilisateurService.forgotPassword(email);
   }
@@ -93,6 +110,9 @@ async googleAuthRedirect(@Req() req, @Res() res) {
   @Public()
   @Post('resend-code')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Renvoyer le code de vérification' })
+  @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string', example: 'user@example.com' } } } })
+  @ApiResponse({ status: 200, description: 'Code renvoyé avec succès.' })
   async resendCode(@Body('email') email: string) {
     return await this.utilisateurService.resendCode(email);
   }
@@ -100,6 +120,9 @@ async googleAuthRedirect(@Req() req, @Res() res) {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Réinitialiser le mot de passe avec le code reçu' })
+  @ApiBody({ type: ResetPasswordDto }) 
+  @ApiResponse({ status: 200, description: 'Mot de passe réinitialisé.' })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
   return await this.utilisateurService.resetPassword(
     resetPasswordDto.email, 
@@ -111,6 +134,9 @@ async googleAuthRedirect(@Req() req, @Res() res) {
   @Public()
   @Post('refreshtoken')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Rafraîchir le jeton d\'accès via le cookie' })
+  @ApiCookieAuth() // Indique que cette route nécessite un cookie
+  @ApiResponse({ status: 200, description: 'Nouveau accessToken retourné.' })
   async refresh(@Req() req: Request) {
   const refreshToken = req.cookies['refreshToken'];
   if (!refreshToken) throw new UnauthorizedException('Refresh token manquant');
@@ -121,6 +147,9 @@ async googleAuthRedirect(@Req() req, @Res() res) {
   @Public() 
   @HttpCode(HttpStatus.OK)
   @Post('connexion')
+  @ApiOperation({ summary: 'Connexion utilisateur et création de session' })
+  @ApiBody({ type: LoginDto })
+  @ApiResponse({ status: 200, description: 'Connexion réussie, Refresh Token mis en cookie.' })
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
     const result = await this.authService.login(loginDto, req);
     
@@ -135,6 +164,9 @@ async googleAuthRedirect(@Req() req, @Res() res) {
 
   @UseGuards(JwtAuthGuard)
   @Post('deconnexion')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Déconnexion et suppression de session' })
+  @ApiResponse({ status: 200, description: 'Déconnexion réussie.' })
   async logout(@Res({ passthrough: true }) res: Response, @GetUser() user: any) {
   // 1. Supprimer le cookie côté client
     res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' });

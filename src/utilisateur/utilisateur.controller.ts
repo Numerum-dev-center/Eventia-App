@@ -24,6 +24,7 @@ import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interf
 import { BaseUpdateProfilDto } from './dto/base-update-profil.dto';
 import { UpdateOrganisateurDto } from './dto/update-organisateur.dto';
 import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
 @Controller('utilisateur')
 @UseGuards(JwtAuthGuard, RolesGuard) // Protection par défaut pour toutes les routes
@@ -50,6 +51,10 @@ export class UtilisateurController {
 }
 
   @Patch('me/profil-client')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mettre à jour le profil client connecté' })
+  @ApiBody({ type: BaseUpdateProfilDto })
+  @ApiResponse({ status: 200, description: 'Profil mis à jour.' })
   async updateProfilClient(
     @GetUser() user: AuthenticatedUser, 
     @Body() updateClientDto: BaseUpdateProfilDto
@@ -58,6 +63,10 @@ export class UtilisateurController {
   }
 
   @Patch('me/profil-organisateur')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Mettre à jour le profil organisateur connecté' })
+  @ApiBody({ type: UpdateOrganisateurDto })
+  @ApiResponse({ status: 200, description: 'Profil organisateur mis à jour.' })
   async updateProfilOrganisateur(
     @GetUser() user: AuthenticatedUser,
     @Body() updateOrganisateurDto: UpdateOrganisateurDto
@@ -76,6 +85,10 @@ export class UtilisateurController {
   @Public()
   @Post(':id/activer')
   @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Activer un compte utilisateur via code' })
+  @ApiParam({ name: 'id', description: 'ID de l\'utilisateur à activer' })
+  @ApiBody({ type: VerifyActivationDto })
+  @ApiResponse({ status: 200, description: 'Compte activé avec succès.' })
   async activate(@Param('id') id: string, @Body() body: VerifyActivationDto) {
   return await this.utilisateurService.verifyActivation(id, body.code);
   }
