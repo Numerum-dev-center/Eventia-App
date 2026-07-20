@@ -27,7 +27,7 @@ export class AuthService {
 
   async register(dto: InscriptionDto, role: Role) {
     // 1. Vérification basique de sécurité
-    if (dto.motDePasse !== dto.confirmMotDePasse) {
+    if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Les mots de passe ne correspondent pas');
     }
 

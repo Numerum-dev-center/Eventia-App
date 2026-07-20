@@ -47,7 +47,7 @@ export class UtilisateurService {
     try {
     // 2. Hasher le mot de passe avant création
     const salt = await bcrypt.genSalt();
-    const hashedPassword = await bcrypt.hash(dto.motDePasse, salt);
+    const hashedPassword = await bcrypt.hash(dto.password, salt);
 
     // 3. Créer l'entité avec les valeurs par défaut
     // Ici, on initialise uniquement ce qu'on a. 

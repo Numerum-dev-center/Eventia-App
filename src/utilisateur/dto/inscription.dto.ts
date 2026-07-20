@@ -19,11 +19,11 @@ export class InscriptionDto {
   @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères.' })
   @IsStrongPassword({ message: 'Le mot de passe doit contenir au moins 1 minuscule, 1 majuscule, 1 chiffre et un caractère spécial.'})
   @ApiProperty({ example: 'Password123!' })
-  motDePasse!: string;
+  password!: string;
 
 
   @IsString()
   @IsStrongPassword()
   @ApiProperty({ example: 'Password123!' })
-  confirmMotDePasse!: string; // Pour valider côté client
+  confirmPassword!: string; // Pour valider côté client
 }
