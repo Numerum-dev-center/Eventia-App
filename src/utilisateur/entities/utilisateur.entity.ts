@@ -13,6 +13,7 @@ import { LogsAudit } from 'src/logs-audit/entities/logs-audit.entity';
 import { Role } from 'src/common/role.enum';
 import { Sexe } from 'src/common/sexe.enum';
 import { BaseEntity } from 'src/common/entities/base.entity';
+import { AuthProvider } from 'src/common/auth-provider.enum';
 
 @Entity()
 export class Utilisateur extends BaseEntity {
@@ -23,10 +24,17 @@ export class Utilisateur extends BaseEntity {
   @Column()
   motDePasse!: string;
 
-  @Column()
+  @Column({
+    type: 'enum',
+    enum: AuthProvider,
+    default: AuthProvider.LOCAL, // Par défaut, un utilisateur est "local"
+  })
+  authProvider!: AuthProvider;
+
+  @Column({nullable : true})
   nom!: string;
 
-  @Column()
+  @Column({nullable : true})
   prenoms!: string;
 
   @Column( {type: 'enum',

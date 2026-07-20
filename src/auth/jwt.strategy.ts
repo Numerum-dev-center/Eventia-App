@@ -3,6 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
 import { JwtPayload } from './interfaces/jwt-payload.interface'; // Ton interface
+import { AuthenticatedUser } from './interfaces/authenticated-user.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -15,7 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   // TypeScript sait maintenant exactement ce qu'il y a dans le payload
-  async validate(payload: JwtPayload) {
+  async validate(payload: JwtPayload): Promise<AuthenticatedUser> {
     // Utilise le bon champ selon ton interface (ex: payload.email)
     const user = await this.userService.findByEmail(payload.email);
     
@@ -24,6 +25,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     }
     
     // Retourner l'utilisateur permet de le retrouver dans req.user
-    return user; 
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
   }
 }

@@ -37,13 +37,6 @@ export class ProfilOrganisateur extends BaseEntity {
   @Column({ nullable: true })
   documentsJustificatifs?: string;
 
-  // Clé étrangère pour la relation 1:1
-  @Column()
-  utilisateurId!: string;
-
-  @Column()
-  evenementId!: string;
-
   @OneToOne(() => Utilisateur, (utilisateur) => utilisateur.profilOrganisateur)
   @JoinColumn({ name: 'utilisateur_id' })
   utilisateur!: Utilisateur;

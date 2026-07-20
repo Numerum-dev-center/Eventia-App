@@ -8,9 +8,9 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  Get,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateUtilisateurDto } from '../utilisateur/dto/create-utilisateur.dto';
 import { LoginDto } from './dto/login.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -18,7 +18,12 @@ import { GetUser } from './decorators/get-user.decorator';
 import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Request, Response } from 'express';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { InscriptionDto } from 'src/utilisateur/dto/inscription.dto';
+import { Role } from 'src/common/role.enum';
+import { AuthGuard } from '@nestjs/passport';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -27,11 +32,56 @@ export class AuthController {
   ) {}
 
   @Public() 
-  @Post('inscription')
-  async register(@Body() createUtilisateurDto: CreateUtilisateurDto) {
-    console.log('DTO reçu:', createUtilisateurDto);
-    return await this.authService.register(createUtilisateurDto);
+  @Post('inscription-client')
+  @ApiOperation({ summary: 'Inscription pour les clients' })
+  @ApiBody({ type: InscriptionDto})
+  async registerClient(@Body() inscriptionDto: InscriptionDto) {
+    console.log('DTO reçu:', inscriptionDto);
+    return await this.authService.register(inscriptionDto, Role.CLIENT);
   }
+
+  @Public() 
+  @Post('inscription-organisateur')
+  @ApiOperation({ summary: 'Inscription pour les organisateurs' })
+  @ApiBody({ type: InscriptionDto})
+  async registerOrganisateur(@Body() inscriptionDto: InscriptionDto) {
+    console.log('DTO reçu:', inscriptionDto);
+    return await this.authService.register(inscriptionDto, Role.ORGANISATEUR);
+  }
+
+  @Public() 
+  @Post('inscription-admin')
+  @ApiOperation({ summary: 'Inscription pour les administrateurs' })
+  @ApiBody({ type: InscriptionDto})
+  async registerAdmin(@Body() inscriptionDto: InscriptionDto) {
+    console.log('DTO reçu:', inscriptionDto);
+    return await this.authService.register(inscriptionDto, Role.ADMIN);
+  }
+
+  // 1. Point d'entrée : Redirige l'utilisateur vers Google
+  @Get('google')
+  @Public() // Très important : doit être accessible sans token
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Cette fonction ne sera jamais exécutée, Passport intercepte la requête
+  }
+
+  @Get('google/callback')
+@Public()
+@UseGuards(AuthGuard('google'))
+async googleAuthRedirect(@Req() req, @Res() res) {
+  // 1. Validation de l'utilisateur Google
+  const user = await this.authService.validateGoogleUser(req.user);
+  
+  // 2. Génération de la paire de tokens
+  const { accessToken, refreshToken } = await this.authService.generateTokens(user, req);
+  
+  // 3. Redirection vers le Front avec les tokens
+  // On passe les deux tokens en query params
+  res.redirect(
+    `http://localhost:4200/auth/success?accessToken=${accessToken}&refreshToken=${refreshToken}`
+  );
+}
 
   @Public()
   @Post('forgot-password')

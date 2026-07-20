@@ -1,3 +1,4 @@
+import { AuthProvider } from './../common/auth-provider.enum';
 import {
   Injectable,
   NotFoundException,
@@ -10,11 +11,16 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { Utilisateur } from './entities/utilisateur.entity';
-import { CreateUtilisateurDto } from './dto/create-utilisateur.dto';
-import { UpdateUtilisateurDto } from './dto/update-utilisateur.dto';
 import { MailService } from 'src/mail/mail.service';
 import { VerifyResetCodeDto } from 'src/utilisateur/dto/verify-reset-code.dto';
+import { InscriptionDto } from './dto/inscription.dto';
+import { Role } from 'src/common/role.enum';
+import { UpdateOrganisateurDto } from './dto/update-organisateur.dto';
+import { ProfilOrganisateur } from 'src/profil-organisateur/entities/profil-organisateur.entity';
+import { BaseUpdateProfilDto } from './dto/base-update-profil.dto';
+import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
 
 @Injectable()
 export class UtilisateurService {
@@ -24,10 +30,12 @@ export class UtilisateurService {
     @InjectRepository(Utilisateur)
     private utilisateurRepository: Repository<Utilisateur>,
     private readonly mailService: MailService,
+    @InjectRepository(ProfilOrganisateur)
+    private profilOrgRepository: Repository<ProfilOrganisateur>,
   ) {}
 
   // --- INSCRIPTION ---
-  async inscription(dto: CreateUtilisateurDto): Promise<Utilisateur> {
+  async inscription(dto: InscriptionDto, role: Role): Promise<Utilisateur> {
     // 1. Vérifier si l'email est déjà utilisé
     const emailExiste = await this.utilisateurRepository.findOne({
       where: { email: dto.email.toLowerCase() },
@@ -37,27 +45,59 @@ export class UtilisateurService {
     }
 
     try {
-      // 2. Créer l'entité
-      const utilisateur = this.utilisateurRepository.create({
-        ...dto,
-        email: dto.email.toLowerCase(),
-      });
+    // 2. Hasher le mot de passe avant création
+    const salt = await bcrypt.genSalt();
+    const hashedPassword = await bcrypt.hash(dto.motDePasse, salt);
 
-      // 3. Hasher le mot de passe avant de sauvegarder
-      const salt = await bcrypt.genSalt();
-      utilisateur.motDePasse = await bcrypt.hash(dto.motDePasse, salt);
+    // 3. Créer l'entité avec les valeurs par défaut
+    // Ici, on initialise uniquement ce qu'on a. 
+    // Les autres champs (nom, prenoms, etc.) seront remplis via le PATCH plus tard.
+    const utilisateur = this.utilisateurRepository.create({
+      email: dto.email.toLowerCase(),
+      motDePasse: hashedPassword,
+      estActif: false, // Inactif par défaut
+      role: role, // Role par défaut
+      // Initialise les champs qui sont obligatoires dans ta DB avec des valeurs vides
+      // Si ton entité les accepte en 'nullable', tu peux les laisser à null ou ommettre ces lignes.
+      nom: '', 
+      prenoms: '',
+    });
 
-      // 4. Par défaut, utilisateur inactif (à activer plus tard)
-      utilisateur.estActif = false;
-
-      return await this.utilisateurRepository.save(utilisateur);
-    } catch (error) {
+    return await this.utilisateurRepository.save(utilisateur);
+  }catch (error) {
       this.logger.error('Erreur inscription:', error);
       throw new InternalServerErrorException(
         'Erreur lors de la création du compte',
       );
     }
   }
+
+  async createGoogleUser(userData: { 
+  email: string; 
+  nom: string; 
+  prenoms: string; 
+  role: Role; 
+  estActif: boolean; 
+  AuthProvider: string;
+}) {
+  // 1. Générer un mot de passe aléatoire très fort (on ne l'utilisera jamais)
+  const randomPassword = crypto.randomBytes(32).toString('hex');
+  
+  // 2. Hasher ce mot de passe
+  const salt = await bcrypt.genSalt();
+  const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+  // 3. Créer l'entité
+  const newUser = this.utilisateurRepository.create({
+    ...userData,
+    motDePasse: hashedPassword, // Obligatoire pour la base de données
+    // Si tu as un champ pour suivre la méthode d'inscription, c'est le moment :
+    // authProvider: 'google', 
+  });
+
+  // 4. Sauvegarder
+  return await this.utilisateurRepository.save(newUser);
+}
 
   async requestActivationCode(id: string) {
     const utilisateur = await this.findOne(id);
@@ -209,7 +249,43 @@ export class UtilisateurService {
   await this.mailService.sendActivationCode(user.email, user.nom, newCode);
   
   return { message: 'Nouveau code envoyé avec succès' };
-}
+  }
+
+  async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
+  // 1. Récupérer l'utilisateur en incluant explicitement le mot de passe
+  // (Si ton entité a { select: false } sur le champ motDePasse, il faut le forcer ici)
+  const utilisateur = await this.utilisateurRepository.findOne({
+    where: { id: userId },
+    select: { 
+      id: true, 
+      motDePasse: true 
+    }, // On force la sélection du mot de passe pour la vérification
+  });
+
+  if (!utilisateur) {
+    throw new NotFoundException('Utilisateur introuvable');
+  }
+
+  // 2. Vérifier si l'ancien mot de passe est correct
+  const isMatch = await bcrypt.compare(
+    changePasswordDto.ancienMotDePasse,
+    utilisateur.motDePasse,
+  );
+
+  if (!isMatch) {
+    throw new BadRequestException('Mot de passe actuel incorrect');
+  }
+
+  // 3. Hasher le nouveau mot de passe
+  const salt = await bcrypt.genSalt();
+  const newHashedPassword = await bcrypt.hash(changePasswordDto.nouveauMotDePasse, salt);
+
+  // 4. Mettre à jour
+  utilisateur.motDePasse = newHashedPassword;
+  await this.utilisateurRepository.save(utilisateur);
+
+  return { message: 'Mot de passe mis à jour avec succès.' };
+  }
 
   // --- CRUD BASIQUE ---
   async findAll(): Promise<Utilisateur[]> {
@@ -255,21 +331,29 @@ export class UtilisateurService {
     return utilisateur;
   }
 
+  async updateOrganisateur(userId: string, dto: UpdateOrganisateurDto) {
+  const { profilOrganisateur, ...userInfos } = dto;
+  
+  // 1. Update les infos utilisateur (nom, tel...)
+  await this.utilisateurRepository.update(userId, userInfos);
+  
+  // 2. Update les infos profilOrganisateur
+  if (profilOrganisateur) {
+     await this.profilOrgRepository
+      .createQueryBuilder()
+      .update(ProfilOrganisateur)
+      .set(profilOrganisateur) // Tes nouvelles données
+      .where("utilisateur_id = :id", { id: userId }) // Ici on cible la colonne SQL
+      .execute();
+  }
+}
+
   async update(
     id: string,
-    updateUtilisateurDto: UpdateUtilisateurDto,
+    updateUtilisateurDto: BaseUpdateProfilDto,
   ): Promise<Utilisateur> {
     const utilisateur = await this.findOne(id);
-
-    // Si un nouveau mot de passe est fourni, on le re-hache
-    if (updateUtilisateurDto.motDePasse) {
-      const salt = await bcrypt.genSalt();
-      updateUtilisateurDto.motDePasse = await bcrypt.hash(
-        updateUtilisateurDto.motDePasse,
-        salt,
-      );
-    }
-
+    
     Object.assign(utilisateur, updateUtilisateurDto);
     return await this.utilisateurRepository.save(utilisateur);
   }
