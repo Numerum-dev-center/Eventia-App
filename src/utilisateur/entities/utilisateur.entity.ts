@@ -42,13 +42,13 @@ export class Utilisateur extends BaseEntity {
     default: Sexe.MASCULIN})
   sexe!: Sexe;
 
-  @Column()
+  @Column({nullable : true})
   dateDeNaissance!: Date;
 
-  @Column()
+  @Column({nullable : true})
   telephone?: string;
 
-  @Column()
+  @Column({nullable : true})
   adresse?: string;
 
   @Column({
