@@ -36,7 +36,7 @@ export class MailService {
         subject: 'Activez votre compte Eventia',
         template: './inscription', 
         context: {
-          activationLink, // Injecte le lien dans la variable {{activationLink}} du template
+          activationLink : activationLink, // Injecte le lien dans la variable {{activationLink}} du template
         },
       });
       
