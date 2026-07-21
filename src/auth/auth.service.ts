@@ -21,10 +21,10 @@ import { Repository } from 'typeorm';
 export class AuthService {
   constructor(
     @InjectRepository(Utilisateur)
-    private readonly userRepository: Repository<Utilisateur>,
-    private readonly jwtService: JwtService,
     private readonly userService: UtilisateurService,
+    private readonly jwtService: JwtService,
     private readonly sessionsService: SessionsJetonsService,
+    private readonly userRepository: Repository<Utilisateur>,
     
   ) {}
 
