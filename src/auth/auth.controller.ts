@@ -98,7 +98,7 @@ export class AuthController {
   // 2. Génération de la paire de tokens
   const { accessToken, refreshToken } = await this.authService.generateTokens(user, req);
   
-  const frontendUrl = this.configService.get<string>('FRONTEND_URL_PROD');
+  const frontendUrl = this.configService.get<string>('BACKEND_URL');
   // 3. Redirection vers le Front avec les tokens
   // On passe les deux tokens en query params
   res.redirect(
