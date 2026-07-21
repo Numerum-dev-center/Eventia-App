@@ -9,6 +9,7 @@ import {
   Res,
   UnauthorizedException,
   Get,
+  Query,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
@@ -18,7 +19,7 @@ import { GetUser } from './decorators/get-user.decorator';
 import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Request, Response } from 'express';
-import { ApiBearerAuth, ApiBody, ApiCookieAuth, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiCookieAuth, ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { InscriptionDto } from 'src/utilisateur/dto/inscription.dto';
 import { Role } from 'src/common/role.enum';
 import { AuthGuard } from '@nestjs/passport';
@@ -58,6 +59,14 @@ export class AuthController {
   async registerAdmin(@Body() inscriptionDto: InscriptionDto) {
     console.log('DTO reçu:', inscriptionDto);
     return await this.authService.register(inscriptionDto, Role.ADMIN);
+  }
+
+  @Public() 
+  @Get('activate')
+  @ApiOperation({ summary: 'Activer le compte via le lien reçu par email' })
+  @ApiQuery({ name: 'token', type: 'string', description: 'Token d’activation unique' })
+  async activateAccount(@Query('token') token: string) {
+    return await this.utilisateurService.activateByToken(token);
   }
 
   // 1. Point d'entrée : Redirige l'utilisateur vers Google

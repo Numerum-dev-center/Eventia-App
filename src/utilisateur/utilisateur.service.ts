@@ -21,6 +21,8 @@ import { UpdateOrganisateurDto } from './dto/update-organisateur.dto';
 import { ProfilOrganisateur } from 'src/profil-organisateur/entities/profil-organisateur.entity';
 import { BaseUpdateProfilDto } from './dto/base-update-profil.dto';
 import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UtilisateurService {
@@ -30,6 +32,8 @@ export class UtilisateurService {
     @InjectRepository(Utilisateur)
     private utilisateurRepository: Repository<Utilisateur>,
     private readonly mailService: MailService,
+    private readonly configService: ConfigService,
+    private readonly jwtService: JwtService,
     @InjectRepository(ProfilOrganisateur)
     private profilOrgRepository: Repository<ProfilOrganisateur>,
   ) {}
@@ -97,6 +101,65 @@ export class UtilisateurService {
 
   // 4. Sauvegarder
   return await this.utilisateurRepository.save(newUser);
+}
+
+// --- GÉNÉRATION DU TOKEN ET DU LIEN ---
+async requestActivationToken(userId: string) {
+  const user = await this.utilisateurRepository.findOne({ where: { id: userId } });
+  if (!user) return;
+
+  // Générer un token unique sécurisé
+  const token = crypto.randomBytes(32).toString('hex');
+  const expires = new Date();
+  expires.setHours(expires.getHours() + 24); // Le lien expire dans 24 heures
+
+  // Sauvegarder le token en base
+  await this.utilisateurRepository.update(userId, {
+    activationToken: token,
+    activationTokenExpires: expires,
+  });
+
+  const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+  const activationLink = `${frontendUrl}/auth/activate?token=${token}`;
+
+  // Envoyer l'e-mail avec le lien
+  await this.mailService.sendActivationEmail(user.email, activationLink);
+}
+
+// --- VALIDATION DU COMPTE VIA LE TOKEN ---
+async activateByToken(token: string) {
+  const user = await this.utilisateurRepository.findOne({
+    where: { activationToken: token },
+  });
+
+  if (!user) {
+    throw new BadRequestException('Lien d’activation invalide');
+  }
+
+  if (user.activationTokenExpires && new Date() > user.activationTokenExpires) {
+    throw new BadRequestException('Le lien d’activation a expiré');
+  }
+
+  // 1. Activer le compte et nettoyer le token
+  user.estActif = true;
+  user.activationToken = null;
+  user.activationTokenExpires = null;
+  await this.utilisateurRepository.save(user);
+
+  // 2. Générer le JWT pour connecter l'utilisateur immédiatement
+  const payload = { sub: user.id, email: user.email, role: user.role };
+  const accessToken = this.jwtService.sign(payload); // Assure-toi d'injecter JwtService
+
+  // 3. Retourner le token et les infos au Front-end
+  return {
+    message: 'Compte activé avec succès !',
+    access_token: accessToken,
+    user: {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    },
+  };
 }
 
   async requestActivationCode(id: string) {
