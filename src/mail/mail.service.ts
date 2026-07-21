@@ -34,7 +34,7 @@ export class MailService {
       await this.mailerService.sendMail({
         to: email,
         subject: 'Activez votre compte Eventia',
-        template: 'inscription', 
+        template: '/inscription', 
         context: {
           activationLink, // Injecte le lien dans la variable {{activationLink}} du template
         },
