@@ -13,10 +13,15 @@ import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { Role } from 'src/common/role.enum';
 import { InscriptionDto } from 'src/utilisateur/dto/inscription.dto';
+import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AuthService {
   constructor(
+    @InjectRepository(Utilisateur)
+    private readonly userRepository: Repository<Utilisateur>,
     private readonly jwtService: JwtService,
     private readonly userService: UtilisateurService,
     private readonly sessionsService: SessionsJetonsService,
@@ -110,6 +115,23 @@ private determineRole(email: string): Role {
 
     return { accessToken, refreshToken };
   }
+
+  async activateUser(token: string, req: Request) {
+  // 1. Chercher l'utilisateur avec le token
+  const user = await this.userRepository.findOne({ where: { activationToken: token } });
+
+  if (!user) {
+    throw new BadRequestException("Jeton d'activation invalide ou expiré.");
+  }
+
+  // 2. Activer le compte et vider le token
+  user.estActif = true;
+  user.activationToken = null; 
+  await this.userRepository.save(user);
+
+  // 3. Utiliser ta fonction existante pour générer les tokens et créer la session
+  return this.generateTokens(user, req);
+}
 
   async generateTokens(user: any, req: Request) {
   const payload = { sub: user.id, email: user.email };

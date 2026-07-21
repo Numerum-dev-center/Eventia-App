@@ -65,9 +65,25 @@ export class AuthController {
   @Get('activate')
   @ApiOperation({ summary: 'Activer le compte via le lien reçu par email' })
   @ApiQuery({ name: 'token', type: 'string', description: 'Token d’activation unique' })
-  async activateAccount(@Query('token') token: string) {
-    return await this.utilisateurService.activateByToken(token);
+  async activateAccount(@Query('token') token: string, @Req() req: Request, @Res() res: Response) {
+  try {
+    // 1. Ton backend valide le token et active le compte
+    const { accessToken, refreshToken } = await this.authService.activateUser(token, req);
+
+    // 2. Ton backend stocke les tokens dans des cookies sécurisés
+    res.cookie('accessToken', accessToken, { httpOnly: true, secure: true }); // secure: true en prod
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
+
+    // 3. Redirection DIRECTE vers le Dashboard React (local ou prod)
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5174';
+    return res.redirect(`${frontendUrl}/organizer/dashboard`);
+    
+  } catch (error) {
+    // En cas d'erreur, rediriger vers une page d'erreur sur le front
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5174';
+    return res.redirect(`${frontendUrl}/auth/error`);
   }
+}
 
   // 1. Point d'entrée : Redirige l'utilisateur vers Google
   @Get('google')
