@@ -20,10 +20,11 @@ import { Repository } from 'typeorm';
 @Injectable()
 export class AuthService {
   constructor(
-    @InjectRepository(Utilisateur)
+    
     private readonly userService: UtilisateurService,
     private readonly jwtService: JwtService,
     private readonly sessionsService: SessionsJetonsService,
+    @InjectRepository(Utilisateur)
     private readonly userRepository: Repository<Utilisateur>,
     
   ) {}
