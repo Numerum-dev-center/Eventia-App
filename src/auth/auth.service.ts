@@ -36,7 +36,7 @@ export class AuthService {
     const newUser = await this.userService.inscription(dto, role);
 
     // 3. Demande de code d'activation
-    await this.userService.requestActivationCode(newUser.id);
+    await this.userService.requestActivationToken(newUser.id);
     
     return { 
       message: 'Compte créé avec succès. Veuillez vérifier votre email pour le code de validation.' 
