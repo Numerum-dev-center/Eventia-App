@@ -13,7 +13,7 @@ import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
-  exports: [AuthService, PassportModule, UtilisateurService],
+  exports: [AuthService, PassportModule],
   imports: [
     TypeOrmModule.forFeature([SessionsJetons]),
     forwardRef(() => UtilisateurModule),
