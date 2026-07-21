@@ -25,6 +25,10 @@ import { UserContextMiddleware } from './common/middlewares/user-context.middlew
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      
+    }),
     EvenementModule,
     TicketsModule,
     TableauDeBordModule,
@@ -45,9 +49,9 @@ import { UserContextMiddleware } from './common/middlewares/user-context.middlew
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        url: process.env.DATABASE_URL, // C'est ici que tu mets l'URL d'Aiven
+        url: config.get<string>('DATABASE_URL'), // C'est ici que tu mets l'URL d'Aiven
         autoLoadEntities: true,
-        synchronize: true, // À passer à 'false' en production !
+        synchronize: false, // À passer à 'false' en production !
         ssl: true,
         extra: {
           ssl: {
@@ -59,10 +63,7 @@ import { UserContextMiddleware } from './common/middlewares/user-context.middlew
       }),
       
     }),
-    ConfigModule.forRoot({
-      isGlobal: true,
-      
-    }),
+    
     MailModule,
   ],
   controllers: [AppController],
