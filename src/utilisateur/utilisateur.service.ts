@@ -119,8 +119,8 @@ async requestActivationToken(userId: string) {
     activationTokenExpires: expires,
   });
 
-  const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-  const activationLink = `${frontendUrl}/auth/activate?token=${token}`;
+  const backendUrl = this.configService.get<string>('BACKEND_URL');
+  const activationLink = `${backendUrl}/auth/activate?token=${token}`;
 
   // Envoyer l'e-mail avec le lien
   await this.mailService.sendActivationEmail(user.email, activationLink);
