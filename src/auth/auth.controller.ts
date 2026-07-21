@@ -102,7 +102,7 @@ export class AuthController {
   // 3. Redirection vers le Front avec les tokens
   // On passe les deux tokens en query params
   res.redirect(
-    `${frontendUrl}/auth/success?accessToken=${accessToken}&refreshToken=${refreshToken}`
+    `${frontendUrl}/auth/activate?accessToken=${accessToken}&refreshToken=${refreshToken}`
   );
 }
 
