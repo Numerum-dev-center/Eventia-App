@@ -61,7 +61,7 @@ export class Utilisateur extends BaseEntity {
   @Column({ default: false })
   estActif!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   activationToken!: string | null ;
 
   @Column({ type: 'timestamp', nullable: true })
