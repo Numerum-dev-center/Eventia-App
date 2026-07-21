@@ -9,15 +9,15 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtStrategy } from './jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SessionsJetons } from './sessions-jetons/entities/sessions-jeton.entity';
-import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
+import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
+
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
   exports: [AuthService, PassportModule],
   imports: [
-    TypeOrmModule.forFeature([SessionsJetons]),
+    TypeOrmModule.forFeature([SessionsJetons, Utilisateur]),
     forwardRef(() => UtilisateurModule),
-    UtilisateurModule,
     SessionsJetonsModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
