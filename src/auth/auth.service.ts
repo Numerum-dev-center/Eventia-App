@@ -99,7 +99,7 @@ private determineRole(email: string): Role {
     const payload: JwtPayload = { email: user.email, sub: user.id };
 
     // Access Token (court)
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
 
     // Refresh Token (long) - On le signe avec une clé différente ou un flag 'refresh'
   const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
