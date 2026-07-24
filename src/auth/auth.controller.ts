@@ -174,7 +174,18 @@ export class AuthController {
   @Post('connexion')
   @ApiOperation({ summary: 'Connexion utilisateur et création de session' })
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ status: 200, description: 'Connexion réussie, Refresh Token mis en cookie.' })
+  @ApiResponse({ 
+    status: 200, 
+    description: 'Connexion réussie, Refresh Token mis en cookie.',
+    schema: {
+      example: {
+        message: 'Connexion réussie',
+        email: 'exemple@domaine.com',
+        role: 'utilisateur',
+        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      }
+    }
+  })
   async login(@Body() loginDto: LoginDto, @Res({ passthrough: true }) res: Response, @Req() req: Request) {
     const result = await this.authService.login(loginDto, req);
     
@@ -185,6 +196,14 @@ export class AuthController {
       sameSite: 'strict', // Protection contre le CSRF
       expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 jours
     });
+
+    // Retourne les informations nécessaires au client
+    return {
+      message: result.message,
+      email: result.email,
+      role: result.role,
+      accessToken: result.accessToken,
+    };
   }
 
   @UseGuards(JwtAuthGuard)
