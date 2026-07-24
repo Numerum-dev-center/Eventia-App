@@ -62,16 +62,16 @@ export class AuthController {
     const { accessToken, refreshToken } = await this.authService.activateUser(token, req);
 
     // 2. Ton backend stocke les tokens dans des cookies sécurisés
-    res.cookie('accessToken', accessToken, { httpOnly: true, secure: true }); // secure: true en prod
-    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
+    res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'none' }); // secure: true en prod
+    res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'none' });
 
     // 3. Redirection DIRECTE vers le Dashboard React (local ou prod)
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL')?.split(',');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     return res.redirect(`${frontendUrl}/organizer/dashboard`);
     
   } catch (error) {
     // En cas d'erreur, rediriger vers une page d'erreur sur le front
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5174';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
     return res.redirect(`${frontendUrl}/auth/error`);
   }
 }
