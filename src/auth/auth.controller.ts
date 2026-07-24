@@ -53,15 +53,6 @@ export class AuthController {
   }
 
   @Public() 
-  @Post('inscription-admin')
-  @ApiOperation({ summary: 'Inscription pour les administrateurs' })
-  @ApiBody({ type: InscriptionDto})
-  async registerAdmin(@Body() inscriptionDto: InscriptionDto) {
-    console.log('DTO reçu:', inscriptionDto);
-    return await this.authService.register(inscriptionDto, Role.ADMIN);
-  }
-
-  @Public() 
   @Get('activate')
   @ApiOperation({ summary: 'Activer le compte via le lien reçu par email' })
   @ApiQuery({ name: 'token', type: 'string', description: 'Token d’activation unique' })
@@ -75,7 +66,7 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true });
 
     // 3. Redirection DIRECTE vers le Dashboard React (local ou prod)
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5174';
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL')?.split(',');
     return res.redirect(`${frontendUrl}/organizer/dashboard`);
     
   } catch (error) {
