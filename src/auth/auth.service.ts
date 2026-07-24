@@ -114,7 +114,13 @@ private determineRole(email: string): Role {
       dateExpiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
-    return { accessToken, refreshToken };
+    return { 
+      message: 'Connexion réussie',
+      email: user.email,
+      role: user.role,
+      accessToken, 
+      refreshToken 
+    };
   }
 
   async activateUser(token: string, req: Request) {
