@@ -67,7 +67,7 @@ export class AuthController {
 
     // 3. Redirection DIRECTE vers le Dashboard React (local ou prod)
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-    return res.redirect(`${frontendUrl}/organizer/dashboard`);
+    return res.redirect(`${frontendUrl}/organisateur/dashboard`);
     
   } catch (error) {
     // En cas d'erreur, rediriger vers une page d'erreur sur le front
