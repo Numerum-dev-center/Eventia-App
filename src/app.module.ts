@@ -47,20 +47,25 @@ import { UserContextMiddleware } from './common/middlewares/user-context.middlew
       
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        type: 'postgres',
-        url: config.get<string>('DATABASE_URL'), // C'est ici que tu mets l'URL d'Aiven
-        autoLoadEntities: true,
-        synchronize: true, // À passer à 'false' en production !
-        ssl: true,
-        extra: {
-          ssl: {
-            rejectUnauthorized: false, // On force ici aussi pour être sûr que le driver PG le prenne
-          },
-        },
-        logging: true,
-        subscribers: [AuditSubscriber],
-      }),
+      useFactory: (config: ConfigService) => {
+        const useSsl = config.get<string>('DATABASE_SSL') !== 'false';
+        return {
+          type: 'postgres',
+          url: config.get<string>('DATABASE_URL'), // C'est ici que tu mets l'URL d'Aiven
+          autoLoadEntities: true,
+          synchronize: true, // À passer à 'false' en production !
+          ssl: useSsl,
+          extra: useSsl
+            ? {
+                ssl: {
+                  rejectUnauthorized: false, // On force ici aussi pour être sûr que le driver PG le prenne
+                },
+              }
+            : {},
+          logging: true,
+          subscribers: [AuditSubscriber],
+        };
+      },
       
     }),
     
