@@ -8,6 +8,7 @@ import {
   Req,
   Res,
   UnauthorizedException,
+  BadRequestException,
   Get,
   Query,
 } from '@nestjs/common';
@@ -140,9 +141,12 @@ export class AuthController {
   @ApiBody({ type: ResetPasswordDto }) 
   @ApiResponse({ status: 200, description: 'Mot de passe réinitialisé.' })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+  if (resetPasswordDto.nouveauMotDePasse !== resetPasswordDto.confirmerMotDePasse) {
+    throw new BadRequestException('Les mots de passe ne correspondent pas');
+  }
   return await this.utilisateurService.resetPassword(
-    resetPasswordDto.email, 
-    resetPasswordDto.code, 
+    resetPasswordDto.email,
+    resetPasswordDto.code,
     resetPasswordDto.nouveauMotDePasse
   );
 }
