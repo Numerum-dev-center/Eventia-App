@@ -31,10 +31,21 @@ export class Commande extends BaseEntity {
   @Column({ type: 'timestamp' })
   dateCommande!: Date;
 
-  // Relation : un client (utilisateur) passe plusieurs commandes
-  @ManyToOne(() => Utilisateur, (user) => user.commandes)
+  // Informations de l'acheteur pour une réservation sans compte (guest checkout)
+  @Column({ nullable: true })
+  buyerName?: string;
+
+  @Column({ nullable: true })
+  buyerEmail?: string;
+
+  @Column({ nullable: true })
+  buyerTelephone?: string;
+
+  // Relation : un client (utilisateur) passe plusieurs commandes — optionnel,
+  // une réservation peut se faire sans compte (guest checkout)
+  @ManyToOne(() => Utilisateur, (user) => user.commandes, { nullable: true })
   @JoinColumn({ name: 'client_id' })
-  client!: Utilisateur;
+  client?: Utilisateur;
 
   // Relation : une commande contient plusieurs tickets émis
   @OneToMany(() => TicketEmis, (ticket) => ticket.commande)

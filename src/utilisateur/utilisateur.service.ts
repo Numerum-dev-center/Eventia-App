@@ -67,13 +67,37 @@ export class UtilisateurService {
       prenoms: '',
     });
 
-    return await this.utilisateurRepository.save(utilisateur);
+    const saved = await this.utilisateurRepository.save(utilisateur);
+
+    // Un organisateur a besoin d'un profil organisateur dès l'inscription
+    // (les événements se rattachent à ce profil, pas directement à l'utilisateur)
+    if (role === Role.ORGANISATEUR) {
+      const profil = this.profilOrgRepository.create({
+        nomEntreprise: '',
+        utilisateur: { id: saved.id } as Utilisateur,
+      });
+      await this.profilOrgRepository.save(profil);
+    }
+
+    return saved;
   }catch (error) {
       this.logger.error('Erreur inscription:', error);
       throw new InternalServerErrorException(
         'Erreur lors de la création du compte',
       );
     }
+  }
+
+  async getProfilOrganisateurId(utilisateurId: string): Promise<string> {
+    const profil = await this.profilOrgRepository.findOne({
+      where: { utilisateur: { id: utilisateurId } },
+    });
+    if (!profil) {
+      throw new NotFoundException(
+        "Profil organisateur introuvable pour cet utilisateur",
+      );
+    }
+    return profil.id;
   }
 
   async createGoogleUser(userData: { 

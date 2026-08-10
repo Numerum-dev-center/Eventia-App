@@ -1,45 +1,22 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { LogsAuditService } from './logs-audit.service';
-import { CreateLogsAuditDto } from './dto/create-logs-audit.dto';
-import { UpdateLogsAuditDto } from './dto/update-logs-audit.dto';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { Role } from 'src/common/role.enum';
 
-@Controller('logs-audit')
+@Controller()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
 export class LogsAuditController {
   constructor(private readonly logsAuditService: LogsAuditService) {}
 
-  @Post()
-  create(@Body() createLogsAuditDto: CreateLogsAuditDto) {
-    return this.logsAuditService.create(createLogsAuditDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.logsAuditService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.logsAuditService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(
-    @Param('id') id: string,
-    @Body() updateLogsAuditDto: UpdateLogsAuditDto,
+  @Get('admin/audit-log')
+  findAll(
+    @Query('userId') userId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
   ) {
-    return this.logsAuditService.update(+id, updateLogsAuditDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.logsAuditService.remove(+id);
+    return this.logsAuditService.findAll({ userId, from, to });
   }
 }

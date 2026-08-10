@@ -1,26 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { CreateLogsAuditDto } from './dto/create-logs-audit.dto';
-import { UpdateLogsAuditDto } from './dto/update-logs-audit.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Between, Repository } from 'typeorm';
+import { LogsAudit } from './entities/logs-audit.entity';
 
 @Injectable()
 export class LogsAuditService {
-  create(createLogsAuditDto: CreateLogsAuditDto) {
-    return 'This action adds a new logsAudit';
-  }
+  constructor(
+    @InjectRepository(LogsAudit)
+    private logsAuditRepository: Repository<LogsAudit>,
+  ) {}
 
-  findAll() {
-    return `This action returns all logsAudit`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} logsAudit`;
-  }
-
-  update(id: number, updateLogsAuditDto: UpdateLogsAuditDto) {
-    return `This action updates a #${id} logsAudit`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} logsAudit`;
+  async findAll(filters: { userId?: string; from?: string; to?: string }) {
+    const where: Record<string, unknown> = {};
+    if (filters.userId) {
+      where.userId = filters.userId;
+    }
+    if (filters.from && filters.to) {
+      where.createdAt = Between(new Date(filters.from), new Date(filters.to));
+    }
+    return this.logsAuditRepository.find({
+      where,
+      order: { createdAt: 'DESC' },
+      take: 200,
+    });
   }
 }
