@@ -5,15 +5,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Request } from 'express'; // Import crucial
-import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
+import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { SessionsJetonsService } from './sessions-jetons/sessions-jetons.service';
+import { SessionsTokenService } from './sessions-jetons/sessions-token.service';
 import { comparePassword } from './auth.utils';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
 import { Role } from 'src/common/role.enum';
-import { InscriptionDto } from 'src/utilisateur/dto/inscription.dto';
-import { Utilisateur } from 'src/utilisateur/entities/utilisateur.entity';
+import { RegisterDto } from 'src/user/dto/register.dto';
+import { User } from 'src/user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -21,25 +21,25 @@ import { Repository } from 'typeorm';
 export class AuthService {
   constructor(
     
-    private readonly userService: UtilisateurService,
+    private readonly userService: UserService,
     private readonly jwtService: JwtService,
-    private readonly sessionsService: SessionsJetonsService,
-    @InjectRepository(Utilisateur)
-    private readonly userRepository: Repository<Utilisateur>,
+    private readonly sessionsService: SessionsTokenService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
     
   ) {}
 
   private readonly ADMIN_EMAILS = ['admin1@tonsite.com', 'admin2@tonsite.com'];
 
-  async register(dto: InscriptionDto, role: Role) {
+  async register(dto: RegisterDto, role: Role) {
     // 1. Vérification basique de sécurité
     if (dto.password !== dto.confirmPassword) {
       throw new BadRequestException('Les mots de passe ne correspondent pas');
     }
 
-    // 2. Appel à ton service utilisateur
+    // 2. Appel à ton service User
     // Note : UserService doit maintenant accepter cet objet (email + mdp)
-    const newUser = await this.userService.inscription(dto, role);
+    const newUser = await this.userService.register(dto, role);
 
     // 3. Demande de code d'activation
     await this.userService.requestActivationToken(newUser.id);
@@ -53,22 +53,22 @@ export class AuthService {
   let user = await this.userService.findByEmail(googleUser.email);
   
   if (user) {
-    // SCÉNARIO : L'utilisateur existe déjà.
-    // S'il est un utilisateur 'google' pur, on continue.
-    // S'il est un utilisateur 'local', on le laisse se connecter via Google.
+    // SCÉNARIO : L'User existe déjà.
+    // S'il est un User 'google' pur, on continue.
+    // S'il est un User 'local', on le laisse se connecter via Google.
     // Tu peux mettre à jour son authProvider en 'both' si tu veux être précis.
     return user;
   }
 
-  // SCÉNARIO : Nouvel utilisateur (Inconnu de la base)
+  // SCÉNARIO : Nouvel User (Inconnu de la base)
   const role = this.determineRole(googleUser.email);
   
   return await this.userService.createGoogleUser({
     email: googleUser.email,
-    nom: googleUser.lastName,
-    prenoms: googleUser.firstName,
+    firstName: googleUser.lastName,
+    lastName: googleUser.firstName,
     role: role,
-    estActif: true,
+    isActive: true,
     AuthProvider: 'google', // Il est créé spécifiquement comme un compte Google
   });
 }
@@ -92,7 +92,7 @@ private determineRole(email: string): Role {
     throw new UnauthorizedException('Ce compte est lié à Google. Utilisez le bouton "Connexion avec Google".');
     }
 
-    const isPasswordValid = await comparePassword(loginDto.motDePasse, user.motDePasse);
+    const isPasswordValid = await comparePassword(loginDto.password, user.password);
     if (!isPasswordValid) throw new UnauthorizedException('Identifiants incorrects');
 
     // 2. Typage explicite du payload
@@ -107,11 +107,11 @@ private determineRole(email: string): Role {
    
 
     await this.sessionsService.create({
-      utilisateur_id: user.id,
-      refresh_token_hash: refreshToken,
-      appareilInfo: req.headers['user-agent'] ?? 'inconnu',
-      adresseIp: req.ip ?? '0.0.0.0',
-      dateExpiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      userId: user.id,
+      refreshTokenHash: refreshToken,
+      deviceInfo: req.headers['user-agent'] ?? 'inconnu',
+      ipAdress: req.ip ?? '0.0.0.0',
+      expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     });
 
     return { 
@@ -124,7 +124,7 @@ private determineRole(email: string): Role {
   }
 
   async activateUser(token: string, req: Request) {
-  // 1. Chercher l'utilisateur avec le token
+  // 1. Chercher l'User avec le token
   const user = await this.userRepository.findOne({ where: { activationToken: token } });
 
   if (!user) {
@@ -132,7 +132,7 @@ private determineRole(email: string): Role {
   }
 
   // 2. Activer le compte et vider le token
-  user.estActif = true;
+  user.isActive = true;
   user.activationToken = null; 
   await this.userRepository.save(user);
 
@@ -149,11 +149,11 @@ private determineRole(email: string): Role {
 
   // 2. Enregistrer le Refresh Token en base de données
   await this.sessionsService.create({
-    utilisateur_id: user.id,
-    refresh_token_hash: refreshToken,
-    appareilInfo: req.headers['user-agent'] ?? 'inconnu',
-      adresseIp: req.ip ?? '0.0.0.0',
-    dateExpiration: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
+    userId: user.id,
+    refreshTokenHash: refreshToken,
+    deviceInfo: req.headers['user-agent'] ?? 'inconnu',
+    ipAdress: req.ip ?? '0.0.0.0',
+    expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
   });
 
   return { accessToken, refreshToken };
@@ -174,7 +174,7 @@ private determineRole(email: string): Role {
       }
 
       // 3. Vérifier si la session n'est pas expirée
-      if (new Date() > session.dateExpiration) {
+      if (new Date() > session.expirationDate) {
         throw new UnauthorizedException('Session expirée, veuillez vous reconnecter');
       }
 
@@ -193,7 +193,7 @@ private determineRole(email: string): Role {
 
   async logout(userId: string): Promise<void> {
     const user = await this.userService.findOne(userId);
-    if (!user) throw new NotFoundException('Utilisateur introuvable');
+    if (!user) throw new NotFoundException('User introuvable');
     await this.sessionsService.removeAllByUser(userId);
   }
 }

@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, MinLength, IsString, Length } from 'class-validator' ;
+import { IsEmail, IsNotEmpty, MinLength, IsString, Length, Equals } from 'class-validator' ;
 
 export class ResetPasswordDto {
   @IsEmail({}, { message: 'Format d\'email invalide' })
@@ -13,9 +13,9 @@ export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty({ message: 'Le nouveau mot de passe est obligatoire' })
   @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
-  nouveauMotDePasse!: string;
+  newPassword!: string;
 
   @IsString()
-  @IsNotEmpty({ message: 'La confirmation du mot de passe est obligatoire' })
-  confirmerMotDePasse!: string;
+  @Equals('nouveauMotDePasse', { message: 'Les mots de passe ne correspondent pas' })
+  confirmPassword!: string;
 }

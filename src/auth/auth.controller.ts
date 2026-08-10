@@ -17,11 +17,11 @@ import { LoginDto } from './dto/login.dto';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { GetUser } from './decorators/get-user.decorator';
-import { UtilisateurService } from 'src/utilisateur/utilisateur.service';
+import { UserService } from 'src/user/user.service';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { Request, Response } from 'express';
 import { ApiBearerAuth, ApiBody, ApiCookieAuth, ApiExcludeEndpoint, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { InscriptionDto } from 'src/utilisateur/dto/inscription.dto';
+import { RegisterDto } from 'src/user/dto/register.dto';
 import { Role } from 'src/common/role.enum';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
@@ -31,26 +31,26 @@ import { ConfigService } from '@nestjs/config';
 export class AuthController {
   constructor(
     private readonly authService: AuthService, 
-    private readonly utilisateurService: UtilisateurService,
+    private readonly utilisateurService: UserService,
     private readonly configService: ConfigService
   ) {}
 
   @Public() 
-  @Post('inscription-client')
-  @ApiOperation({ summary: 'Inscription pour les clients' })
-  @ApiBody({ type: InscriptionDto})
-  async registerClient(@Body() inscriptionDto: InscriptionDto) {
-    console.log('DTO reçu:', inscriptionDto);
-    return await this.authService.register(inscriptionDto, Role.CLIENT);
+  @Post('Register-client')
+  @ApiOperation({ summary: 'Register pour les clients' })
+  @ApiBody({ type: RegisterDto})
+  async registerClient(@Body() RegisterDto: RegisterDto) {
+    console.log('DTO reçu:', RegisterDto);
+    return await this.authService.register(RegisterDto, Role.CLIENT);
   }
 
   @Public() 
-  @Post('inscription-organisateur')
-  @ApiOperation({ summary: 'Inscription pour les organisateurs' })
-  @ApiBody({ type: InscriptionDto})
-  async registerOrganisateur(@Body() inscriptionDto: InscriptionDto) {
-    console.log('DTO reçu:', inscriptionDto);
-    return await this.authService.register(inscriptionDto, Role.ORGANISATEUR);
+  @Post('Register-organisateur')
+  @ApiOperation({ summary: 'Register pour les organisateurs' })
+  @ApiBody({ type: RegisterDto})
+  async registerOrganisateur(@Body() RegisterDto: RegisterDto) {
+    console.log('DTO reçu:', RegisterDto);
+    return await this.authService.register(RegisterDto, Role.ORGANIZER);
   }
 
   @Public() 
@@ -141,13 +141,13 @@ export class AuthController {
   @ApiBody({ type: ResetPasswordDto }) 
   @ApiResponse({ status: 200, description: 'Mot de passe réinitialisé.' })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
-  if (resetPasswordDto.nouveauMotDePasse !== resetPasswordDto.confirmerMotDePasse) {
+  if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
     throw new BadRequestException('Les mots de passe ne correspondent pas');
   }
   return await this.utilisateurService.resetPassword(
-    resetPasswordDto.email,
-    resetPasswordDto.code,
-    resetPasswordDto.nouveauMotDePasse
+    resetPasswordDto.email, 
+    resetPasswordDto.code, 
+    resetPasswordDto.newPassword
   );
 }
 
