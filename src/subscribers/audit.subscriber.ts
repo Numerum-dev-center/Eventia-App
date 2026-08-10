@@ -5,7 +5,7 @@ import {
   UpdateEvent,
   RemoveEvent,
 } from 'typeorm';
-import { LogsAudit } from 'src/logs-audit/entities/logs-audit.entity';
+import { AuditLog } from 'src/logs-audit/entities/audit-log.entity';
 import { userStorage } from 'src/common/services/user-content.service';
 
 @EventSubscriber()
@@ -22,9 +22,9 @@ export class AuditSubscriber implements EntitySubscriberInterface {
   }
 
   private async saveLog(event: InsertEvent<any> | UpdateEvent<any>, action: string) {
-  if (event.metadata.target === LogsAudit) return;
+  if (event.metadata.target === AuditLog) return;
 
-  const logRepository = event.manager.getRepository(LogsAudit);
+  const logRepository = event.manager.getRepository(AuditLog);
 
   let targetId: string = 'unknown';
   let changes: any;

@@ -13,9 +13,9 @@ export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty({ message: 'Le nouveau mot de passe est obligatoire' })
   @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères' })
-  nouveauMotDePasse!: string;
+  newPassword!: string;
 
   @IsString()
   @Equals('nouveauMotDePasse', { message: 'Les mots de passe ne correspondent pas' })
-  confirmerMotDePasse!: string;
+  confirmPassword!: string;
 }

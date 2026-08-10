@@ -10,5 +10,5 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty({ message: 'Le mot de passe est obligatoire' })
   @ApiProperty({ example: 'Password123!' })
-  motDePasse!: string;
+  password!: string;
 }
