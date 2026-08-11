@@ -17,7 +17,7 @@ import { MailService } from 'src/mail/mail.service';
 import { VerifyResetCodeDto } from 'src/user/dto/verify-reset-code.dto';
 import { RegisterDto } from './dto/register.dto';
 import { Role } from 'src/common/role.enum';
-import { UpdateOrganizerDto } from './dto/update-organizer.dto';
+import { UpdateOrganizerProfileDto } from 'src/organizer-profile/dto/update-organizer-profile.dto';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { BaseUpdateProfileDto } from './dto/base-update-profile.dto';
 import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
@@ -394,11 +394,10 @@ async activateByToken(token: string) {
     return user;
   }
 
-  async updateOrganizer(userId: string, dto: UpdateOrganizerDto) {
-  const { organizerProfile, ...userInfos } = dto;
+  async updateOrganizer(userId: string, dto: UpdateOrganizerProfileDto) {
+  const { organizerProfile } = dto;
   
-  // 1. Update les infos user (nom, tel...)
-  await this.userRepository.update(userId, userInfos);
+  
   
   // 2. Update les infos profilOrganisateur
   if (organizerProfile) {

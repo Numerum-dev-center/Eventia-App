@@ -1,12 +1,16 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { CreateOrganizerProfileDto } from './create-organizer-profile.dto';
+import { BaseUpdateProfileDto } from 'src/user/dto/base-update-profile.dto';
+import { IsOptional, ValidateNested } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
 
-export class UpdateOrganizerProfileDto extends PartialType(CreateOrganizerProfileDto) {}
+export class UpdateOrganizerProfileDto extends PartialType(CreateOrganizerProfileDto) {
 
-/*export class UpdateOrganizerDto extends BaseUpdateProfileDto {
-  @IsOptional()
-  @ApiPropertyOptional({ type: OrganizerProfileDetailsDto, description: "Détails spécifiques du profil organisateur" })
+    @IsOptional()
+  @ApiPropertyOptional({ type: CreateOrganizerProfileDto, description: "Détails spécifiques du profil organisateur" })
   @ValidateNested()
-  @Type(() => OrganizerProfileDetailsDto)
-  organizerProfile?: OrganizerProfileDetailsDto;
-}*/
+  @Type(() => CreateOrganizerProfileDto)
+  organizerProfile?: CreateOrganizerProfileDto;
+}
+
