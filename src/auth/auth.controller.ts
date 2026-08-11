@@ -197,29 +197,6 @@ export class AuthController {
     };
   }
 
-  @Public()
-  @HttpCode(HttpStatus.OK)
-  @Post('admin/login')
-  @ApiOperation({ summary: 'Connexion spécifique pour les administrateurs' })
-  async adminLogin(@Body() loginDto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-   
-    const result = await this.authService.loginAdmin(loginDto, req, res);
-
-    // Définit le cookie avec le refresh token
-    res.cookie('refreshToken', result.refreshToken, {
-      httpOnly: true, // Empêche l'accès via JavaScript (XSS)
-      //secure: process.env.NODE_ENV === 'production', // Uniquement HTTPS en prod
-      sameSite: 'strict', // Protection contre le CSRF
-      expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 jours
-    });
-    
-    return {
-    message: result.message,
-    email: result.email,
-    role: result.role,
-    accessToken: result.accessToken,
-  };
-  }
 
   @UseGuards(JwtAuthGuard)
   @Post('logout')

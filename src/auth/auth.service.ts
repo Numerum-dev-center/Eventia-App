@@ -125,50 +125,7 @@ private determineRole(email: string): Role {
     };
   }
 
-  async loginAdmin(dto: LoginDto, req: Request, res: Response) {
-  // 1. Chercher l'utilisateur par email
-  const user = await this.userRepository.findOne({ where: { email: dto.email } });
 
-  if (!user) {
-    throw new UnauthorizedException('Identifiants invalides.');
-  }
-
-  // 2. Vérifier si c'est bien un ADMIN
-  if (user.role !== Role.ADMIN) {
-    throw new ForbiddenException("Accès refusé. Vous n'êtes pas administrateur.");
-  }
-
-  // 3. Vérifier le mot de passe avec bcrypt
-  const isPasswordValid = await bcrypt.compare(dto.password, user.password);
-  if (!isPasswordValid) {
-    throw new UnauthorizedException('Identifiants invalides.');
-  }
-
-  // 4. Générer les tokens (en incluant le rôle dans le payload du JWT)
-  const payload = { sub: user.id, email: user.email, role: user.role };
-  const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
-  const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
-
-  // 5. Sauvegarder la session et envoyer les cookies (comme pour l'user classique)
-  await this.sessionsService.create({
-    userId: user.id,
-    refreshTokenHash: refreshToken,
-    deviceInfo: req.headers['user-agent'] ?? 'inconnu',
-    ipAdress: req.ip ?? '0.0.0.0',
-    expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  });
-
-  res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'none' });
-  res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'none' });
-
-  return { 
-    message: 'Connexion admin réussie', 
-    accessToken,
-    refreshToken,
-    email: user.email,
-    role: user.role,
-   };
-}
 
   async activateUser(token: string, req: Request) {
   // 1. Chercher l'User avec le token
