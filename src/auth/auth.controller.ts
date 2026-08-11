@@ -44,7 +44,7 @@ export class AuthController {
   }
 
   @Public() 
-  @Post('register-organisateur')
+  @Post('register-organizer')
   @ApiOperation({ summary: 'Register pour les organisateurs' })
   @ApiBody({ type: RegisterDto})
   async registerOrganisateur(@Body() RegisterDto: RegisterDto) {
