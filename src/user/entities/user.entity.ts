@@ -15,7 +15,7 @@ import { Sex } from 'src/common/sex.enum';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { AuthProvider } from 'src/common/auth-provider.enum';
 
-@Entity()
+@Entity('user')
 export class User extends BaseEntity {
 
   @Column({ unique: true })
