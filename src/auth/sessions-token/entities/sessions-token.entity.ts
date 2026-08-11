@@ -13,7 +13,7 @@ export class SessionsToken extends BaseEntity{
   @Column()
   refresh_token_hash!: string;
 
-  @Column()
+  @Column({ nullable: true })
   deviceInfo!: string;
 
   @Column()
