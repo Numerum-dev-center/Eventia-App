@@ -24,7 +24,7 @@ export class SessionsTokenService {
   }
 
   async findByToken(token: string): Promise<SessionsToken | null> {
-    return await this.sessionsRepository.findOne({ where: { refresh_token_hash: token } });
+    return await this.sessionsRepository.findOne({ where: { refreshTokenHash: token } });
   }
 
   async findAll(): Promise<SessionsToken[]> {
@@ -57,7 +57,7 @@ export class SessionsTokenService {
 
   async findByHash(hash: string): Promise<SessionsToken | null> {
     return await this.sessionsRepository.findOne({
-      where: { refresh_token_hash: hash },
+      where: { refreshTokenHash: hash },
     });
   }
 
