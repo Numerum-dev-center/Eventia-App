@@ -104,7 +104,7 @@ private determineRole(email: string): Role {
     const accessToken = this.jwtService.sign(payload, { expiresIn: '24h' });
 
     // Refresh Token (long) - On le signe avec une clé différente ou un flag 'refresh'
-  const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
 
    
 
@@ -161,7 +161,13 @@ private determineRole(email: string): Role {
   res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'none' });
   res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'none' });
 
-  return { message: 'Connexion admin réussie', accessToken };
+  return { 
+    message: 'Connexion admin réussie', 
+    accessToken,
+    refreshToken,
+    email: user.email,
+    role: user.role,
+   };
 }
 
   async activateUser(token: string, req: Request) {
