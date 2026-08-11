@@ -22,7 +22,7 @@ import { VerifyResetCodeDto } from 'src/user/dto/verify-reset-code.dto';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interface';
 import { BaseUpdateProfileDto } from './dto/base-update-profile.dto';
-import { UpdateOrganizerDto } from './dto/update-organizer.dto';
+import { UpdateOrganizerProfileDto } from 'src/organizer-profile/dto/update-organizer-profile.dto';
 import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 
@@ -62,14 +62,14 @@ export class UserController {
     return this.userService.update(user.id, updateClientDto);
   }
 
-  @Patch('me/profile-organisateur')
+  @Patch('me/profile-organizer')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Mettre à jour le profil organisateur connecté' })
-  @ApiBody({ type: UpdateOrganizerDto })
+  @ApiBody({ type: UpdateOrganizerProfileDto })
   @ApiResponse({ status: 200, description: 'Profil organisateur mis à jour.' })
   async updateProfileOrganisateur(
     @GetUser() user: AuthenticatedUser,
-    @Body() updateOrganizerDto: UpdateOrganizerDto
+    @Body() updateOrganizerDto: UpdateOrganizerProfileDto
   ) {
     // Ici, le service saura qu'il doit aussi mettre à jour la table profil_organisateurs
     return this.userService.updateOrganizer(user.id, updateOrganizerDto);

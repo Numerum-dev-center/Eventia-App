@@ -7,7 +7,7 @@ import { MailModule } from 'src/mail/mail.module';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { Order } from 'src/order/entities/order.entity';
 import { Ticket } from 'src/tickets/entities/ticket.entity';
-import { SessionsToken } from 'src/auth/sessions-jetons/entities/sessions-token.entity';
+import { SessionsToken } from 'src/auth/sessions-token/entities/sessions-token.entity';
 import { AuditLog } from 'src/logs-audit/entities/audit-log.entity';
 import { AuthModule } from 'src/auth/auth.module';
 import { JwtModule } from '@nestjs/jwt';

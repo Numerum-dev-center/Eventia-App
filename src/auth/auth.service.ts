@@ -3,11 +3,12 @@ import {
   UnauthorizedException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
-import { Request } from 'express'; // Import crucial
+import { Request, Response } from 'express'; // Import crucial
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
-import { SessionsTokenService } from './sessions-jetons/sessions-token.service';
+import { SessionsTokenService } from './sessions-token/sessions-token.service';
 import { comparePassword } from './auth.utils';
 import { LoginDto } from './dto/login.dto';
 import { JwtPayload } from './interfaces/jwt-payload.interface';
@@ -16,6 +17,7 @@ import { RegisterDto } from 'src/user/dto/register.dto';
 import { User } from 'src/user/entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -122,6 +124,45 @@ private determineRole(email: string): Role {
       refreshToken 
     };
   }
+
+  async loginAdmin(dto: LoginDto, req: Request, res: Response) {
+  // 1. Chercher l'utilisateur par email
+  const user = await this.userRepository.findOne({ where: { email: dto.email } });
+
+  if (!user) {
+    throw new UnauthorizedException('Identifiants invalides.');
+  }
+
+  // 2. Vérifier si c'est bien un ADMIN
+  if (user.role !== Role.ADMIN) {
+    throw new ForbiddenException("Accès refusé. Vous n'êtes pas administrateur.");
+  }
+
+  // 3. Vérifier le mot de passe avec bcrypt
+  const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+  if (!isPasswordValid) {
+    throw new UnauthorizedException('Identifiants invalides.');
+  }
+
+  // 4. Générer les tokens (en incluant le rôle dans le payload du JWT)
+  const payload = { sub: user.id, email: user.email, role: user.role };
+  const accessToken = await this.jwtService.signAsync(payload, { expiresIn: '15m' });
+  const refreshToken = await this.jwtService.signAsync(payload, { expiresIn: '7d' });
+
+  // 5. Sauvegarder la session et envoyer les cookies (comme pour l'user classique)
+  await this.sessionsService.create({
+    userId: user.id,
+    refreshTokenHash: refreshToken,
+    deviceInfo: req.headers['user-agent'] ?? 'inconnu',
+    ipAdress: req.ip ?? '0.0.0.0',
+    expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  });
+
+  res.cookie('accessToken', accessToken, { httpOnly: true, secure: true, sameSite: 'none' });
+  res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'none' });
+
+  return { message: 'Connexion admin réussie', accessToken };
+}
 
   async activateUser(token: string, req: Request) {
   // 1. Chercher l'User avec le token

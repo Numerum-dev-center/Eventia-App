@@ -51,7 +51,7 @@ import { UserContextMiddleware } from './common/middlewares/user-context.middlew
         type: 'postgres',
         url: config.get<string>('DATABASE_URL'), // C'est ici que tu mets l'URL d'Aiven
         autoLoadEntities: true,
-        synchronize: true, // À passer à 'false' en production !
+        synchronize: false, // À passer à 'false' en production !
         ssl: true,
         extra: {
           ssl: {

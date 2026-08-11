@@ -35,7 +35,7 @@ export class AuthController {
   ) {}
 
   @Public() 
-  @Post('Register-client')
+  @Post('register-client')
   @ApiOperation({ summary: 'Register pour les clients' })
   @ApiBody({ type: RegisterDto})
   async registerClient(@Body() RegisterDto: RegisterDto) {
@@ -44,7 +44,7 @@ export class AuthController {
   }
 
   @Public() 
-  @Post('Register-organisateur')
+  @Post('register-organisateur')
   @ApiOperation({ summary: 'Register pour les organisateurs' })
   @ApiBody({ type: RegisterDto})
   async registerOrganisateur(@Body() RegisterDto: RegisterDto) {
@@ -162,7 +162,7 @@ export class AuthController {
 
   @Public() 
   @HttpCode(HttpStatus.OK)
-  @Post('connexion')
+  @Post('login')
   @ApiOperation({ summary: 'Connexion utilisateur et création de session' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ 
@@ -197,8 +197,16 @@ export class AuthController {
     };
   }
 
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('admin/login')
+  @ApiOperation({ summary: 'Connexion spécifique pour les administrateurs' })
+  async adminLogin(@Body() loginDto: LoginDto, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    return this.authService.loginAdmin(loginDto, req, res);
+  }
+
   @UseGuards(JwtAuthGuard)
-  @Post('deconnexion')
+  @Post('logout')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Déconnexion et suppression de session' })
   @ApiResponse({ status: 200, description: 'Déconnexion réussie.' })
