@@ -11,7 +11,7 @@ import { BaseEntity } from 'src/common/entities/base.entity';
 export class SessionsToken extends BaseEntity{
 
   @Column()
-  refresh_token_hash!: string;
+  refreshTokenHash!: string;
 
   @Column()
   deviceInfo!: string;

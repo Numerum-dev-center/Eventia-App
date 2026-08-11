@@ -105,12 +105,12 @@ private determineRole(email: string): Role {
 
     // Refresh Token (long) - On le signe avec une clé différente ou un flag 'refresh'
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
    
 
     await this.sessionsService.create({
       userId: user.id,
-      refreshTokenHash: refreshToken,
+      refreshTokenHash: hashedRefreshToken,
       deviceInfo: req.headers['user-agent'] ?? 'inconnu',
       ipAdress: req.ip ?? '0.0.0.0',
       expirationDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
