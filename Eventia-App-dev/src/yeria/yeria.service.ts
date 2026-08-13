@@ -159,6 +159,13 @@ export class YeriaService {
       relations: { ticketsCategories: true },
     });
 
+    if (events.length === 0) {
+      return this.buildInfoMessage(
+        'Aucun événement',
+        'Aucun événement disponible pour le moment. Revenez bientôt !',
+      );
+    }
+
     const view = new ActionListView(
       YERIA_VIEW_ID.EVENT_LIST,
       'Événements',
@@ -192,6 +199,13 @@ export class YeriaService {
       order: { startDate: 'ASC' },
       relations: { ticketsCategories: true },
     });
+
+    if (events.length === 0) {
+      return this.buildInfoMessage(
+        'Aucun résultat',
+        'Aucun événement ne correspond à ces critères.',
+      );
+    }
 
     const view = new ActionListView(
       YERIA_VIEW_ID.EVENT_LIST,
@@ -787,6 +801,15 @@ export class YeriaService {
     ).catch(() => {
       this.logger.warn('Notification de réservation non délivrée');
     });
+  }
+
+  private buildInfoMessage(title: string, body: string): SignedEnvelope {
+    const view = new MessageView(YERIA_VIEW_ID.ERROR, title)
+      .setBody(body)
+      .setSeverity('info')
+      .setDismissible(true);
+
+    return this.app.serve(view);
   }
 
   private buildResultMessage(
