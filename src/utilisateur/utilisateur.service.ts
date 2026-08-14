@@ -382,6 +382,7 @@ async activateByToken(token: string) {
   async findOne(id: string): Promise<Utilisateur> {
     const utilisateur = await this.utilisateurRepository.findOne({
       where: { id },
+      relations: { profilOrganisateur: true },
     });
     if (!utilisateur) {
       throw new NotFoundException(`Utilisateur #${id} introuvable`);

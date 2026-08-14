@@ -4,13 +4,16 @@ import {
   InternalServerErrorException,
   NotFoundException,
   ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { Evenement } from './entities/evenement.entity';
 import { CreateEvenementDto } from './dto/create-evenement.dto';
 import { UpdateEvenementDto } from './dto/update-evenement.dto';
 import { StatutEvenement } from 'src/common/statut-evenement.enum';
+import { CategorieTicket } from 'src/categorie-ticket/entities/categorie-ticket.entity';
+import { TicketEmis } from 'src/tickets/entities/ticket-emis.entity';
 
 @Injectable()
 export class EvenementService {
@@ -111,7 +114,36 @@ export class EvenementService {
 
   async remove(id: string, organisateurId: string): Promise<void> {
     const evenement = await this.findOwned(id, organisateurId);
-    await this.evenementRepository.remove(evenement);
+    const categorieIds = (evenement.categoriesTickets ?? []).map((c) => c.id);
+
+    if (categorieIds.length > 0) {
+      const ticketRepository = this.evenementRepository.manager.getRepository(TicketEmis);
+      const billetsVendus = await ticketRepository.count({
+        where: { categorieTicket: { id: In(categorieIds) } },
+      });
+
+      if (billetsVendus > 0) {
+        throw new ConflictException(
+          "Impossible de supprimer cet événement : des billets ont déjà été vendus. Annulez-le plutôt.",
+        );
+      }
+    }
+
+    try {
+      if (categorieIds.length > 0) {
+        const categorieRepository = this.evenementRepository.manager.getRepository(CategorieTicket);
+        await categorieRepository.delete(categorieIds);
+      }
+      await this.evenementRepository.remove(evenement);
+    } catch (error) {
+      if (error instanceof ConflictException) {
+        throw error;
+      }
+      this.logger.error("Erreur lors de la suppression de l'événement :", error);
+      throw new InternalServerErrorException(
+        "Erreur lors de la suppression de l'événement",
+      );
+    }
   }
 
   // Modération admin
