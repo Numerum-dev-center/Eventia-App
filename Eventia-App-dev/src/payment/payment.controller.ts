@@ -70,6 +70,16 @@ export class PaymentController {
     return this.paymentService.updateStatut(id, statut, externalRef);
   }
 
+  @Patch(':id/refund')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  refund(
+    @Param('id') id: string,
+    @Body('reason') reason?: string,
+  ) {
+    return this.paymentService.refund(id, reason);
+  }
+
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

@@ -2,8 +2,11 @@ import {
   Controller,
   Get,
   Param,
+  Res,
   UseGuards,
+  Header,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { DashboardService } from './dashboard.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -42,5 +45,18 @@ export class DashboardController {
   @Roles(Role.ADMIN)
   getRecentActivity() {
     return this.dashboardService.getRecentActivity();
+  }
+
+  @Get('event/:eventId/export-participants')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  @Header('Content-Type', 'text/csv')
+  @Header('Content-Disposition', 'attachment; filename="participants.csv"')
+  async exportParticipants(
+    @Param('eventId') eventId: string,
+    @Res() res: Response,
+  ) {
+    const csv = await this.dashboardService.exportParticipants(eventId);
+    res.send(csv);
   }
 }

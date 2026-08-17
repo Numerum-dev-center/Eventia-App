@@ -21,6 +21,11 @@ import { MailModule } from './mail/mail.module';
 import { AuditSubscriber } from './subscribers/audit.subscriber';
 import { UserContextMiddleware } from './common/middlewares/user-context.middleware';
 import { YeriaModule } from './yeria/yeria.module';
+import { NotificationModule } from './notification/notification.module';
+import { MediaModule } from './media/media.module';
+import { CommissionModule } from './commission/commission.module';
+import { EventCategoryModule } from './event-category/event-category.module';
+import { PromoCodeModule } from './promo-code/promo-code.module';
 
 
 
@@ -44,6 +49,11 @@ import { YeriaModule } from './yeria/yeria.module';
     AuditLogModule,
     OrderModule,
     OrganizerProfileModule,
+    NotificationModule,
+    MediaModule,
+    CommissionModule,
+    EventCategoryModule,
+    PromoCodeModule,
     TypeOrmModule.forRootAsync({
       
       imports: [ConfigModule],

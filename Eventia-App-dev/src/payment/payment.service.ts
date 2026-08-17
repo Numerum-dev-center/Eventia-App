@@ -3,6 +3,7 @@ import {
   NotFoundException,
   Logger,
   InternalServerErrorException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -102,5 +103,18 @@ export class PaymentService {
       .addSelect('SUM(payment.amount)', 'total')
       .groupBy('payment.paymentMethod')
       .getRawMany();
+  }
+
+  async refund(id: string, reason?: string): Promise<Payment> {
+    const payment = await this.findOne(id);
+    if (payment.statut === PaymentStatut.REFUNDED) {
+      throw new BadRequestException('Ce paiement a déjà été remboursé');
+    }
+    if (payment.statut !== PaymentStatut.PAID) {
+      throw new BadRequestException('Seul un paiement payé peut être remboursé');
+    }
+
+    payment.statut = PaymentStatut.REFUNDED;
+    return await this.paymentRepository.save(payment);
   }
 }

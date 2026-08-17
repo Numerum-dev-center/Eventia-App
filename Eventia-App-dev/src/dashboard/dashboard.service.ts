@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from 'src/event/entities/event.entity';
@@ -6,6 +6,7 @@ import { Ticket } from 'src/tickets/entities/ticket.entity';
 import { Order } from 'src/order/entities/order.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { User } from 'src/user/entities/user.entity';
+import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
 import { EventStatut } from 'src/common/event-statut.enum';
 import { PaymentStatut } from 'src/common/payment-statut.enum';
 import { TicketValidationStatut } from 'src/common/ticket-validation-statut.enum';
@@ -23,6 +24,8 @@ export class DashboardService {
     private paymentRepository: Repository<Payment>,
     @InjectRepository(User)
     private userRepository: Repository<User>,
+    @InjectRepository(TicketCategory)
+    private ticketCategoryRepository: Repository<TicketCategory>,
   ) {}
 
   private readonly logger = new Logger(DashboardService.name);
@@ -183,5 +186,38 @@ export class DashboardService {
       statut: order.paymentStatut,
       date: order.createdAt,
     }));
+  }
+
+  async exportParticipants(eventId: string): Promise<string> {
+    const event = await this.eventRepository.findOne({ where: { id: eventId } });
+    if (!event) {
+      throw new NotFoundException(`Événement #${eventId} non trouvé`);
+    }
+
+    const tickets = await this.ticketRepository
+      .createQueryBuilder('ticket')
+      .innerJoin('ticket.ticketCategory', 'tc')
+      .innerJoin('tc.event', 'event', 'event.id = :eventId', { eventId })
+      .leftJoinAndSelect('ticket.ticketCategory', 'ticketCategory')
+      .leftJoinAndSelect('ticket.order', 'order')
+      .leftJoinAndSelect('order.client', 'client')
+      .getMany();
+
+    const header = 'Nom,Prénom,Email,Téléphone,Catégorie,Billet,Statut,Date achat';
+    const rows = tickets.map((ticket) => {
+      const client = ticket.order?.client;
+      return [
+        client?.lastName || '',
+        client?.firstName || '',
+        client?.email || '',
+        client?.phoneNumber || '',
+        ticket.ticketCategory?.name || '',
+        ticket.uniqueCodeCrypto || '',
+        ticket.validationStatut,
+        ticket.order?.createdAt ? new Date(ticket.order.createdAt).toISOString() : '',
+      ].map((v) => `"${String(v).replace(/"/g, '""')}"`).join(',');
+    });
+
+    return [header, ...rows].join('\n');
   }
 }

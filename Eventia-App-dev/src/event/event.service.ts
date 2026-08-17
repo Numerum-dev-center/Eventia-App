@@ -49,6 +49,9 @@ export class EventService {
         adress: createEventDto.adress,
         longitude: createEventDto.longitude,
         latitude: createEventDto.latitude,
+        locationType: createEventDto.locationType,
+        onlineUrl: createEventDto.onlineUrl,
+        maxCapacity: createEventDto.maxCapacity,
         startDate: createEventDto.startDate,
         endDate: createEventDto.endDate,
         bannerImage: createEventDto.bannerImage,
@@ -138,12 +141,27 @@ export class EventService {
   ): Promise<Event> {
     const event = await this.findOne(id);
 
-    if (statut === EventStatut.PUBLISHED && event.statut === EventStatut.DRAFT) {
-      if (!event.startDate || !event.endDate) {
-        throw new BadRequestException(
-          "Les dates de début et de fin sont requises pour publier",
-        );
-      }
+    const allowedTransitions: Record<EventStatut, EventStatut[]> = {
+      [EventStatut.DRAFT]: [EventStatut.PENDING_REVIEW, EventStatut.PUBLISHED],
+      [EventStatut.PENDING_REVIEW]: [EventStatut.PUBLISHED, EventStatut.SUSPENDED, EventStatut.DRAFT],
+      [EventStatut.PUBLISHED]: [EventStatut.SUSPENDED, EventStatut.CANCELED, EventStatut.FINISHED],
+      [EventStatut.SUSPENDED]: [EventStatut.PUBLISHED, EventStatut.CANCELED],
+      [EventStatut.CANCELED]: [EventStatut.ARCHIVED],
+      [EventStatut.FINISHED]: [EventStatut.ARCHIVED],
+      [EventStatut.ARCHIVED]: [],
+    };
+
+    const allowed = allowedTransitions[event.statut] || [];
+    if (!allowed.includes(statut)) {
+      throw new BadRequestException(
+        `Transition de ${event.statut} vers ${statut} non autorisée`,
+      );
+    }
+
+    if (statut === EventStatut.PUBLISHED && !event.startDate) {
+      throw new BadRequestException(
+        "La date de début est requise pour publier",
+      );
     }
 
     event.statut = statut;

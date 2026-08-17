@@ -68,7 +68,10 @@ export class AdministratorService {
 
   async getPendingEvents(): Promise<Event[]> {
     return await this.eventRepository.find({
-      where: { statut: EventStatut.DRAFT },
+      where: [
+        { statut: EventStatut.DRAFT },
+        { statut: EventStatut.PENDING_REVIEW },
+      ],
       relations: { organizerProfile: true },
       order: { createdAt: 'DESC' },
     });

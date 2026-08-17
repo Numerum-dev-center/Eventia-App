@@ -7,8 +7,10 @@ import {
   IsEnum,
   IsArray,
   ValidateNested,
+  IsNumber,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { LocationType } from 'src/common/location-type.enum';
 
 export class CreateEventDto {
   @IsString()
@@ -23,13 +25,13 @@ export class CreateEventDto {
   @IsNotEmpty()
   category!: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  placeName!: string;
+  placeName?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  adress!: string;
+  adress?: string;
 
   @IsOptional()
   @IsNumberString()
@@ -38,6 +40,18 @@ export class CreateEventDto {
   @IsOptional()
   @IsNumberString()
   latitude?: string;
+
+  @IsOptional()
+  @IsEnum(LocationType)
+  locationType?: LocationType;
+
+  @IsOptional()
+  @IsString()
+  onlineUrl?: string;
+
+  @IsOptional()
+  @IsNumber()
+  maxCapacity?: number;
 
   @IsDateString()
   startDate!: Date;

@@ -9,8 +9,10 @@ import {
 
 import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
 import { EventStatut } from 'src/common/event-statut.enum';
+import { LocationType } from 'src/common/location-type.enum';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
+import { EventMedia } from 'src/media/entities/event-media.entity';
 
 @Entity()
 export class Event extends BaseEntity {
@@ -47,6 +49,19 @@ export class Event extends BaseEntity {
 
   @Column({
     type: 'enum',
+    enum: LocationType,
+    default: LocationType.PHYSICAL,
+  })
+  locationType!: LocationType;
+
+  @Column({ nullable: true })
+  onlineUrl?: string;
+
+  @Column({ nullable: true })
+  maxCapacity?: number;
+
+  @Column({
+    type: 'enum',
     enum: EventStatut,
     default: EventStatut.DRAFT,
   })
@@ -60,4 +75,8 @@ export class Event extends BaseEntity {
   // Relation : un événement contient plusieurs catégories de tickets
   @OneToMany(() => TicketCategory, (category) => category.event)
   ticketsCategories!: TicketCategory[];
+
+  // Relation : un événement contient plusieurs médias
+  @OneToMany(() => EventMedia, (media) => media.event)
+  media?: EventMedia[];
 }
