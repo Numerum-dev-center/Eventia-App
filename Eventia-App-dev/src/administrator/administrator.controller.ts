@@ -1,34 +1,86 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Delete,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { AdministratorService } from './administrator.service';
-import { CreateAdministratorDto } from './dto/create-administrator.dto';
-import { UpdateAdministratorDto } from './dto/update-administrator.dto';
+import { EventStatut } from 'src/common/event-statut.enum';
+import { Role } from 'src/common/role.enum';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Roles } from 'src/auth/decorators/roles.decorator';
 
 @Controller('administrator')
 export class AdministratorController {
   constructor(private readonly administratorService: AdministratorService) {}
 
-  @Post()
-  create(@Body() createAdministrateurDto: CreateAdministratorDto) {
-    return this.administratorService.create(CreateAdministratorDto);
+  @Get('users')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getAllUsers() {
+    return this.administratorService.getAllUsers();
   }
 
-  @Get()
-  findAll() {
-    return this.administratorService.findAll();
+  @Get('users/role/:role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getUsersByRole(@Param('role') role: Role) {
+    return this.administratorService.getUsersByRole(role);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.administratorService.findOne(+id);
+  @Patch('users/:id/toggle-active')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  toggleUserActive(@Param('id') id: string) {
+    return this.administratorService.toggleUserActive(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAdministratorDto: UpdateAdministratorDto) {
-    return this.administratorService.update(+id, updateAdministratorDto);
+  @Delete('users/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  deleteUser(@Param('id') id: string) {
+    return this.administratorService.deleteUser(id);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.administratorService.remove(+id);
+  @Get('events')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getAllEvents() {
+    return this.administratorService.getAllEvents();
+  }
+
+  @Get('events/pending')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getPendingEvents() {
+    return this.administratorService.getPendingEvents();
+  }
+
+  @Patch('events/:id/moderate')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  moderateEvent(
+    @Param('id') id: string,
+    @Body('statut') statut: EventStatut,
+  ) {
+    return this.administratorService.moderateEvent(id, statut);
+  }
+
+  @Get('financial')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getFinancialSummary() {
+    return this.administratorService.getFinancialSummary();
+  }
+
+  @Get('stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getUserStats() {
+    return this.administratorService.getUserStats();
   }
 }

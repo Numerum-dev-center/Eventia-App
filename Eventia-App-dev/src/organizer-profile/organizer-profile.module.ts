@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { OrganizerProfileService } from './organizer-profile.service';
 import { OrganizerProfileController } from './organizer-profile.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/user/entities/user.entity';
-import { Event } from 'src/event/entities/event.entity';
+import { OrganizerProfile } from './entities/organizer-profile.entity';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([Event, User])],
+  imports: [TypeOrmModule.forFeature([OrganizerProfile])],
   controllers: [OrganizerProfileController],
   providers: [OrganizerProfileService],
+  exports: [OrganizerProfileService],
 })
 export class OrganizerProfileModule {}

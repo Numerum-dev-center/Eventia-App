@@ -2,20 +2,12 @@ import { Module } from '@nestjs/common';
 import { TicketService } from './tickets.service';
 import { TicketController } from './tickets.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from 'src/user/entities/user.entity';
-import { Order } from 'src/order/entities/order.entity';
-import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
-import { ValidationTicketLog } from 'src/acess-control/entities/ticket-validation-log.entity';
+import { Ticket } from './entities/ticket.entity';
+
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Order,
-      TicketCategory,
-      ValidationTicketLog,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([Ticket])],
   controllers: [TicketController],
   providers: [TicketService],
+  exports: [TicketService],
 })
 export class TicketsModule {}

@@ -55,14 +55,7 @@ import { YeriaModule } from './yeria/yeria.module';
           url: config.get<string>('DATABASE_URL'), // C'est ici que tu mets l'URL d'Aiven
           autoLoadEntities: true,
           synchronize: true, // À passer à 'false' en production !
-          ssl: useSsl,
-          extra: useSsl
-            ? {
-                ssl: {
-                  rejectUnauthorized: false, // On force ici aussi pour être sûr que le driver PG le prenne
-                },
-              }
-            : {},
+          ssl: useSsl ? { rejectUnauthorized: false } : false,
           logging: true,
           subscribers: [AuditSubscriber],
         };

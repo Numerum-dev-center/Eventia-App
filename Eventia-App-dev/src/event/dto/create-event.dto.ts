@@ -4,7 +4,11 @@ import {
   IsOptional,
   IsDateString,
   IsNumberString,
+  IsEnum,
+  IsArray,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class CreateEventDto {
   @IsString()
@@ -44,4 +48,25 @@ export class CreateEventDto {
   @IsOptional()
   @IsString()
   bannerImage?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateEventTicketCategoryDto)
+  ticketsCategories?: CreateEventTicketCategoryDto[];
+}
+
+export class CreateEventTicketCategoryDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsNumberString()
+  price!: string;
+
+  @IsNotEmpty()
+  totalQuantity!: number;
+
+  @IsOptional()
+  limitByPerson?: number;
 }

@@ -13,11 +13,14 @@ export class SessionsTokenService {
   ) {}
 
   async create(dto: CreateSessionsTokenDto): Promise<SessionsToken> {
-    const { userId, ...sessionData } = dto;
+    const { userId, refreshTokenHash, deviceInfo, ipAdress, expirationDate } = dto;
 
     const session = this.sessionsRepository.create({
-      ...sessionData,
-      user: { id: userId } as any, 
+      refresh_token_hash: refreshTokenHash,
+      deviceInfo,
+      ipAdress,
+      expirationDate,
+      user: { id: userId } as any,
     });
 
     return await this.sessionsRepository.save(session);

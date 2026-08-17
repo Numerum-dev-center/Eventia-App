@@ -1,22 +1,26 @@
-import { IsString, IsOptional, IsNotEmpty } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+} from 'class-validator';
 
 export class CreateOrganizerProfileDto {
-  @ApiProperty()
   @IsString()
   @IsNotEmpty()
   societyName!: string;
 
-  @ApiProperty({ required: false })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  description?: string;
-
-  @IsString()
-  @IsNotEmpty()
   brand?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
+  description?: string;
+
+  @IsOptional()
+  paymentDetails?: any;
+
+  @IsOptional()
+  @IsString()
   officialFiles?: string;
 }

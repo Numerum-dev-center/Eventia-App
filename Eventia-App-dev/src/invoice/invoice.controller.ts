@@ -1,34 +1,74 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { InvoiceService } from './invoice.service';
-import { CreateInvoiceDto } from './dto/create-invoice.dto';
-import { UpdateInvoiceDto } from './dto/update-invoice.dto';
+import { CreateInvoiceDto, UpdateInvoiceDto } from './dto/create-invoice.dto';
+import { InvoiceStatut } from 'src/common/invoice-statut.enum';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/roles.guard';
+import { Role } from 'src/common/role.enum';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { GetUser } from 'src/auth/decorators/get-user.decorator';
+import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interface';
 
 @Controller('invoice')
 export class InvoiceController {
   constructor(private readonly invoiceService: InvoiceService) {}
 
   @Post()
-  create(@Body() createInvoiceDto: CreateInvoiceDto) {
-    return this.invoiceService.create(createInvoiceDto);
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ORGANIZER, Role.ADMIN)
+  create(@Body() dto: CreateInvoiceDto) {
+    return this.invoiceService.create(dto);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   findAll() {
     return this.invoiceService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.invoiceService.findOne(+id);
+  @Get('stats')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getStats() {
+    return this.invoiceService.getStats();
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateFacturationDto: UpdateInvoiceDto) {
-    return this.invoiceService.update(+id, updateFacturationDto);
+  @Get('order/:orderId')
+  @UseGuards(JwtAuthGuard)
+  findByOrder(@Param('orderId') orderId: string) {
+    return this.invoiceService.findByOrder(orderId);
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard)
+  findOne(@Param('id') id: string) {
+    return this.invoiceService.findOne(id);
+  }
+
+  @Patch(':id/statut')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  updateStatut(
+    @Param('id') id: string,
+    @Body('statut') statut: InvoiceStatut,
+  ) {
+    return this.invoiceService.updateStatut(id, statut);
   }
 
   @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
   remove(@Param('id') id: string) {
-    return this.invoiceService.remove(+id);
+    return this.invoiceService.remove(id);
   }
 }

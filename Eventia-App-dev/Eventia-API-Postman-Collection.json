@@ -1,0 +1,1015 @@
+{
+  "info": {
+    "name": "Eventia Backend API",
+    "_postman_id": "eventia-backend-collection",
+    "description": "Collection complète de l'API backend Eventia — Plateforme Événementielle\n\n## Flow de test\n1. Inscrire un Client puis un Organisateur\n2. Login pour obtenir le token\n3. Utiliser le token dans Authorize\n4. Tester les routes dans l'ordre\n\n## Variables à configurer\n- `baseUrl` = http://localhost:3000\n- Le token est automatiquement sauvegardé après le login",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token", "value": "" },
+    { "key": "organizerToken", "value": "" },
+    { "key": "adminToken", "value": "" },
+    { "key": "userId", "value": "" },
+    { "key": "organizerId", "value": "" },
+    { "key": "eventId", "value": "" },
+    { "key": "ticketCategoryId", "value": "" },
+    { "key": "orderId", "value": "" },
+    { "key": "ticketId", "value": "" },
+    { "key": "paymentId", "value": "" },
+    { "key": "invoiceId", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
+  },
+  "item": [
+
+    {
+      "name": "Auth",
+      "description": "Inscription, connexion, activation, reset mot de passe",
+      "item": [
+        {
+          "name": "1. Inscription Client",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('userId', json.id); }",
+                  "console.log('Client ID:', pm.collectionVariables.get('userId'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/Register-client", "host": ["{{baseUrl}}"], "path": ["auth", "Register-client"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"client@test.com\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "2. Inscription Organisateur",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('organizerId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/Register-organisateur", "host": ["{{baseUrl}}"], "path": ["auth", "Register-organisateur"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"organizer@test.com\",\n  \"password\": \"Test@1234\",\n  \"confirmPassword\": \"Test@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "3. Connexion Client → Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) { pm.collectionVariables.set('token', json.accessToken); console.log('Token sauvegardé!'); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/connexion", "host": ["{{baseUrl}}"], "path": ["auth", "connexion"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"client@test.com\",\n  \"password\": \"Test@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "4. Connexion Organisateur → Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) { pm.collectionVariables.set('organizerToken', json.accessToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/connexion", "host": ["{{baseUrl}}"], "path": ["auth", "connexion"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"organizer@test.com\",\n  \"password\": \"Test@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "5. Refresh Token",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/refreshtoken", "host": ["{{baseUrl}}"], "path": ["auth", "refreshtoken"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"<refresh_token>\"\n}" }
+          }
+        },
+        {
+          "name": "6. Mot de passe oublié",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/forgot-password", "host": ["{{baseUrl}}"], "path": ["auth", "forgot-password"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"client@test.com\"\n}" }
+          }
+        },
+        {
+          "name": "7. Renvoyer code activation",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/resend-code", "host": ["{{baseUrl}}"], "path": ["auth", "resend-code"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"client@test.com\"\n}" }
+          }
+        },
+        {
+          "name": "8. Reset mot de passe",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/reset-password", "host": ["{{baseUrl}}"], "path": ["auth", "reset-password"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"client@test.com\",\n  \"code\": \"123456\",\n  \"newPassword\": \"NewPass@1234\",\n  \"confirmPassword\": \"NewPass@1234\"\n}" }
+          }
+        },
+        {
+          "name": "9. Déconnexion",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/deconnexion", "host": ["{{baseUrl}}"], "path": ["auth", "deconnexion"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Users",
+      "description": "Gestion des utilisateurs",
+      "item": [
+        {
+          "name": "Liste users (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/user/list", "host": ["{{baseUrl}}"], "path": ["user", "list"] }
+          }
+        },
+        {
+          "name": "Détails user",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/user/details/{{userId}}", "host": ["{{baseUrl}}"], "path": ["user", "details", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Changer mot de passe",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/user/me/change-password", "host": ["{{baseUrl}}"], "path": ["user", "me", "change-password"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"oldPassword\": \"Test@1234\",\n  \"newPassword\": \"NewPass@1234\"\n}" }
+          }
+        },
+        {
+          "name": "Modifier profil client",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/user/me/profil-client", "host": ["{{baseUrl}}"], "path": ["user", "me", "profil-client"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"lastName\": \"Dupont\",\n  \"firstName\": \"Jean\",\n  \"phoneNumber\": \"+228 90 12 34 56\",\n  \"homeAdress\": \"Lomé, Togo\"\n}" }
+          }
+        },
+        {
+          "name": "Modifier profil organisateur",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/user/me/profile-organisateur", "host": ["{{baseUrl}}"], "path": ["user", "me", "profile-organisateur"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"lastName\": \"Koffi\",\n  \"firstName\": \"Kofi\",\n  \"organizerProfile\": {\n    \"societyName\": \"EventCorp Togo\",\n    \"brand\": \"EventCorp\",\n    \"description\": \"Organisateur d'événements à Lomé\"\n  }\n}" }
+          }
+        },
+        {
+          "name": "Supprimer user (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/user/delete/{{userId}}", "host": ["{{baseUrl}}"], "path": ["user", "delete", "{{userId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Organizer Profile",
+      "description": "Gestion des profils organisateurs",
+      "item": [
+        {
+          "name": "Créer profil organisateur",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('organizerProfileId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/organizer-profile", "host": ["{{baseUrl}}"], "path": ["organizer-profile"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"societyName\": \"EventCorp Togo\",\n  \"brand\": \"EventCorp\",\n  \"description\": \"Leader de l'événementiel au Togo\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste profils (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/organizer-profile", "host": ["{{baseUrl}}"], "path": ["organizer-profile"] }
+          }
+        },
+        {
+          "name": "Mon profil",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/organizer-profile/me", "host": ["{{baseUrl}}"], "path": ["organizer-profile", "me"] }
+          }
+        },
+        {
+          "name": "Détails profil",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/organizer-profile/{{organizerProfileId}}", "host": ["{{baseUrl}}"], "path": ["organizer-profile", "{{organizerProfileId}}"] }
+          }
+        },
+        {
+          "name": "Modifier profil",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/organizer-profile/{{organizerProfileId}}", "host": ["{{baseUrl}}"], "path": ["organizer-profile", "{{organizerProfileId}}"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Nouvelle description\"\n}" }
+          }
+        },
+        {
+          "name": "Valider profil (Admin)",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/organizer-profile/{{organizerProfileId}}/verification", "host": ["{{baseUrl}}"], "path": ["organizer-profile", "{{organizerProfileId}}", "verification"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Approved\"\n}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Events",
+      "description": "CRUD complet des événements + publication",
+      "item": [
+        {
+          "name": "Créer événement (Organizer)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('eventId', json.id); console.log('Event ID:', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/event", "host": ["{{baseUrl}}"], "path": ["event"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Festival Afrobeat Lomé 2026\",\n  \"description\": \"Le plus grand festival de musique afrobeat d'Afrique de l'Ouest\",\n  \"category\": \"Concert\",\n  \"placeName\": \"Stade de Kégué\",\n  \"adress\": \"Boulevard du 13 Janvier, Lomé\",\n  \"longitude\": \"1.2255\",\n  \"latitude\": \"6.1256\",\n  \"startDate\": \"2026-12-20T20:00:00.000Z\",\n  \"endDate\": \"2026-12-21T04:00:00.000Z\",\n  \"bannerImage\": \"https://example.com/banner.jpg\",\n  \"ticketsCategories\": [\n    {\n      \"name\": \"Standard\",\n      \"price\": \"5000\",\n      \"totalQuantity\": 500,\n      \"limitByPerson\": 4\n    },\n    {\n      \"name\": \"VIP\",\n      \"price\": \"15000\",\n      \"totalQuantity\": 100,\n      \"limitByPerson\": 2\n    },\n    {\n      \"name\": \"Early Bird\",\n      \"price\": \"3000\",\n      \"totalQuantity\": 200,\n      \"limitByPerson\": 4\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste tous les événements",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/event", "host": ["{{baseUrl}}"], "path": ["event"] }
+          }
+        },
+        {
+          "name": "Événements publiés",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/event/published", "host": ["{{baseUrl}}"], "path": ["event", "published"] }
+          }
+        },
+        {
+          "name": "Détails événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Événements par organisateur",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/event/organizer/{{organizerProfileId}}", "host": ["{{baseUrl}}"], "path": ["event", "organizer", "{{organizerProfileId}}"] }
+          }
+        },
+        {
+          "name": "Modifier événement",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"title\": \"Festival Afrobeat Lomé 2026 — Édition Spéciale\"\n}" }
+          }
+        },
+        {
+          "name": "Publier événement",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/event/{{eventId}}/statut", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}", "statut"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Published\"\n}" }
+          }
+        },
+        {
+          "name": "Annuler événement",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/event/{{eventId}}/statut", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}", "statut"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Cancelled\"\n}" }
+          }
+        },
+        {
+          "name": "Supprimer événement",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Ticket Categories",
+      "description": "Gestion des catégories de billets (VIP, Standard, Early Bird)",
+      "item": [
+        {
+          "name": "Créer catégorie",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('ticketCategoryId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/ticket-category", "host": ["{{baseUrl}}"], "path": ["ticket-category"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Gold VIP\",\n  \"price\": 20000,\n  \"totalQuantity\": 50,\n  \"limitByPerson\": 2,\n  \"eventId\": \"{{eventId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste catégories",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket-category", "host": ["{{baseUrl}}"], "path": ["ticket-category"] }
+          }
+        },
+        {
+          "name": "Catégories par événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket-category/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["ticket-category", "event", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Détails catégorie",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket-category/{{ticketCategoryId}}", "host": ["{{baseUrl}}"], "path": ["ticket-category", "{{ticketCategoryId}}"] }
+          }
+        },
+        {
+          "name": "Modifier catégorie",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/ticket-category/{{ticketCategoryId}}", "host": ["{{baseUrl}}"], "path": ["ticket-category", "{{ticketCategoryId}}"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"price\": 25000\n}" }
+          }
+        },
+        {
+          "name": "Supprimer catégorie",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/ticket-category/{{ticketCategoryId}}", "host": ["{{baseUrl}}"], "path": ["ticket-category", "{{ticketCategoryId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Orders",
+      "description": "Commandes / Réservations",
+      "item": [
+        {
+          "name": "Créer commande",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('orderId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/order", "host": ["{{baseUrl}}"], "path": ["order"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientId\": \"{{userId}}\",\n  \"totalAmount\": 15000\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste commandes (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/order", "host": ["{{baseUrl}}"], "path": ["order"] }
+          }
+        },
+        {
+          "name": "Mes commandes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/order/me", "host": ["{{baseUrl}}"], "path": ["order", "me"] }
+          }
+        },
+        {
+          "name": "Détails commande",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["order", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "Modifier commande",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["order", "{{orderId}}"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"transactionGatewayId\": \"TXN-12345\"\n}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Tickets",
+      "description": "Billets avec QR code crypto",
+      "item": [
+        {
+          "name": "Créer tickets",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (Array.isArray(json) && json[0] && json[0].id) { pm.collectionVariables.set('ticketId', json[0].id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/ticket", "host": ["{{baseUrl}}"], "path": ["ticket"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"ticketCategoryId\": \"{{ticketCategoryId}}\",\n  \"quantity\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste tickets (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket", "host": ["{{baseUrl}}"], "path": ["ticket"] }
+          }
+        },
+        {
+          "name": "Tickets par commande",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket/order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["ticket", "order", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "Tickets par événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["ticket", "event", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Détails ticket",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket/{{ticketId}}", "host": ["{{baseUrl}}"], "path": ["ticket", "{{ticketId}}"] }
+          }
+        },
+        {
+          "name": "Rechercher par code QR",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/ticket/code/EVT-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "host": ["{{baseUrl}}"], "path": ["ticket", "code", "EVT-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"] }
+          }
+        },
+        {
+          "name": "Valider ticket (scan)",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/ticket/{{ticketId}}/validate", "host": ["{{baseUrl}}"], "path": ["ticket", "{{ticketId}}", "validate"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"scannerUserId\": \"{{userId}}\"\n}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Payments",
+      "description": "Gestion des paiements",
+      "item": [
+        {
+          "name": "Créer paiement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('paymentId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/payment", "host": ["{{baseUrl}}"], "path": ["payment"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"amount\": 15000,\n  \"paymentMethod\": \"mobile_money\",\n  \"externalTransactionReference\": \"MP-2026-001\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste paiements (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/payment", "host": ["{{baseUrl}}"], "path": ["payment"] }
+          }
+        },
+        {
+          "name": "Paiements par commande",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/payment/order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["payment", "order", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "Revenus totaux",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/payment/revenue", "host": ["{{baseUrl}}"], "path": ["payment", "revenue"] }
+          }
+        },
+        {
+          "name": "Paiements par méthode",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/payment/by-method", "host": ["{{baseUrl}}"], "path": ["payment", "by-method"] }
+          }
+        },
+        {
+          "name": "Détails paiement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/payment/{{paymentId}}", "host": ["{{baseUrl}}"], "path": ["payment", "{{paymentId}}"] }
+          }
+        },
+        {
+          "name": "Mettre à jour statut paiement",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/payment/{{paymentId}}/status", "host": ["{{baseUrl}}"], "path": ["payment", "{{paymentId}}", "status"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Paid\",\n  \"externalReference\": \"MP-2026-001-CONFIRMED\"\n}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Invoices",
+      "description": "Facturation automatique",
+      "item": [
+        {
+          "name": "Créer facture",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('invoiceId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/invoice", "host": ["{{baseUrl}}"], "path": ["invoice"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste factures (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/invoice", "host": ["{{baseUrl}}"], "path": ["invoice"] }
+          }
+        },
+        {
+          "name": "Stats facturation",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/invoice/stats", "host": ["{{baseUrl}}"], "path": ["invoice", "stats"] }
+          }
+        },
+        {
+          "name": "Facture par commande",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/invoice/order/{{orderId}}", "host": ["{{baseUrl}}"], "path": ["invoice", "order", "{{orderId}}"] }
+          }
+        },
+        {
+          "name": "Détails facture",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/invoice/{{invoiceId}}", "host": ["{{baseUrl}}"], "path": ["invoice", "{{invoiceId}}"] }
+          }
+        },
+        {
+          "name": "Valider facture",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/invoice/{{invoiceId}}/statut", "host": ["{{baseUrl}}"], "path": ["invoice", "{{invoiceId}}", "statut"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"statut\": \"issued\"\n}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Dashboard",
+      "description": "Statistiques temps réel",
+      "item": [
+        {
+          "name": "Stats globales (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "stats"] }
+          }
+        },
+        {
+          "name": "Stats organisateur",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/organizer/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "organizer", "stats"] }
+          }
+        },
+        {
+          "name": "Stats événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/event/{{eventId}}/stats", "host": ["{{baseUrl}}"], "path": ["dashboard", "event", "{{eventId}}", "stats"] }
+          }
+        },
+        {
+          "name": "Activité récente (Admin)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/activity", "host": ["{{baseUrl}}"], "path": ["dashboard", "activity"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Access Control",
+      "description": "Validation de billets et journal d'entrées",
+      "item": [
+        {
+          "name": "Valider billet (scan)",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/acess-control/validate", "host": ["{{baseUrl}}"], "path": ["acess-control", "validate"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketId\": \"{{ticketId}}\",\n  \"deviceId\": \"SCANNER-001\",\n  \"location\": \"Entrée Principale\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Journal complet",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/acess-control", "host": ["{{baseUrl}}"], "path": ["acess-control"] }
+          }
+        },
+        {
+          "name": "Journal par événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/acess-control/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["acess-control", "event", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Stats entrées par événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/acess-control/event/{{eventId}}/stats", "host": ["{{baseUrl}}"], "path": ["acess-control", "event", "{{eventId}}", "stats"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Administrator",
+      "description": "Back-office administration",
+      "item": [
+        {
+          "name": "Tous les utilisateurs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/administrator/users", "host": ["{{baseUrl}}"], "path": ["administrator", "users"] }
+          }
+        },
+        {
+          "name": "Users par rôle",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/administrator/users/role/Organizer", "host": ["{{baseUrl}}"], "path": ["administrator", "users", "role", "Organizer"] }
+          }
+        },
+        {
+          "name": "Activer/Désactiver user",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/administrator/users/{{userId}}/toggle-active", "host": ["{{baseUrl}}"], "path": ["administrator", "users", "{{userId}}", "toggle-active"] }
+          }
+        },
+        {
+          "name": "Supprimer user (Admin)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/administrator/users/{{userId}}", "host": ["{{baseUrl}}"], "path": ["administrator", "users", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Tous les événements",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/administrator/events", "host": ["{{baseUrl}}"], "path": ["administrator", "events"] }
+          }
+        },
+        {
+          "name": "Événements en attente",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/administrator/events/pending", "host": ["{{baseUrl}}"], "path": ["administrator", "events", "pending"] }
+          }
+        },
+        {
+          "name": "Modérer événement",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/administrator/events/{{eventId}}/moderate", "host": ["{{baseUrl}}"], "path": ["administrator", "events", "{{eventId}}", "moderate"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Published\"\n}" }
+          }
+        },
+        {
+          "name": "Résumé financier",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/administrator/financial", "host": ["{{baseUrl}}"], "path": ["administrator", "financial"] }
+          }
+        },
+        {
+          "name": "Stats utilisateurs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/administrator/stats", "host": ["{{baseUrl}}"], "path": ["administrator", "stats"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Audit Logs",
+      "description": "Journal d'audit",
+      "item": [
+        {
+          "name": "Tous les logs",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/audit-log", "host": ["{{baseUrl}}"], "path": ["audit-log"] }
+          }
+        },
+        {
+          "name": "Logs par entité",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/audit-log/entity/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["audit-log", "entity", "event", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Logs par utilisateur",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/audit-log/user/{{userId}}", "host": ["{{baseUrl}}"], "path": ["audit-log", "user", "{{userId}}"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Yeria (Server-Driven UI)",
+      "description": "Routes mobile Yeria SDK — vues et actions",
+      "item": [
+        {
+          "name": "Vue scan QR",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/scan", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "scan"] }
+          }
+        },
+        {
+          "name": "Vue wallet billet",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/tickets/EVT-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "tickets", "EVT-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"] }
+          }
+        },
+        {
+          "name": "Vue liste événements",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/events", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "events"] }
+          }
+        },
+        {
+          "name": "Vue filtre événements",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/events/filter", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "events", "filter"] }
+          }
+        },
+        {
+          "name": "Vue détails événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "events", "{{eventId}}"] }
+          }
+        },
+        {
+          "name": "Vue carte événement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/events/{{eventId}}/map", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "events", "{{eventId}}", "map"] }
+          }
+        },
+        {
+          "name": "Vue formulaire réservation",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/events/{{eventId}}/book", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "events", "{{eventId}}", "book"] }
+          }
+        },
+        {
+          "name": "Vue historique commandes",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/views/orders/{{userId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "views", "orders", "{{userId}}"] }
+          }
+        },
+        {
+          "name": "Action filtre catégorie",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/events/filter", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "events", "filter"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"category\": \"Concert\"\n}" }
+          }
+        },
+        {
+          "name": "Action réserver billets",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/event-booking", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "event-booking"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"ticketCategoryId\": \"{{ticketCategoryId}}\",\n  \"quantity\": 2\n}"
+            }
+          }
+        },
+        {
+          "name": "Action scanner billet",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/scan-ticket", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "scan-ticket"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrData\": \"EVT-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\",\n  \"deviceId\": \"SCANNER-001\",\n  \"location\": \"Entrée Nord\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Notifications",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/api/v1/yeria/notifications", "host": ["{{baseUrl}}"], "path": ["api", "v1", "yeria", "notifications"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"title\": \"Billet confirmé\",\n  \"body\": \"Votre billet pour le Festival Afrobeat a été confirmé.\",\n  \"link\": \"/orders/123\"\n}"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

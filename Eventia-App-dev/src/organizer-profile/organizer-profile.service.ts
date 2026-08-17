@@ -1,26 +1,84 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { OrganizerProfile } from './entities/organizer-profile.entity';
 import { CreateOrganizerProfileDto } from './dto/create-organizer-profile.dto';
 import { UpdateOrganizerProfileDto } from './dto/update-organizer-profile.dto';
+import { StatutVerification } from 'src/common/profile-organizer-validation-statut.enum';
 
 @Injectable()
 export class OrganizerProfileService {
-  create(createOrganizerProfileDto: CreateOrganizerProfileDto) {
-    return 'This action adds a new profilOrganisateur';
+  constructor(
+    @InjectRepository(OrganizerProfile)
+    private organizerProfileRepository: Repository<OrganizerProfile>,
+  ) {}
+
+  private readonly logger = new Logger(OrganizerProfileService.name);
+
+  async create(dto: CreateOrganizerProfileDto, userId: string): Promise<OrganizerProfile> {
+    try {
+      const profile = this.organizerProfileRepository.create({
+        ...dto,
+        user: { id: userId },
+      });
+      return await this.organizerProfileRepository.save(profile);
+    } catch (error) {
+      this.logger.error('Erreur lors de la création du profil organisateur', error);
+      throw new InternalServerErrorException('Erreur lors de la création du profil');
+    }
   }
 
-  findAll() {
-    return `This action returns all profilOrganisateur`;
+  async findAll(): Promise<OrganizerProfile[]> {
+    return await this.organizerProfileRepository.find({
+      relations: { user: true, event: true },
+      order: { createdAt: 'DESC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} profilOrganisateur`;
+  async findOne(id: string): Promise<OrganizerProfile> {
+    const profile = await this.organizerProfileRepository.findOne({
+      where: { id },
+      relations: { user: true, event: true },
+    });
+    if (!profile) {
+      throw new NotFoundException(`Profil organisateur #${id} non trouvé`);
+    }
+    return profile;
   }
 
-  update(id: number, UpdateOrganizerProfileDto: UpdateOrganizerProfileDto) {
-    return `This action updates a #${id} profilOrganisateur`;
+  async findByUserId(userId: string): Promise<OrganizerProfile> {
+    const profile = await this.organizerProfileRepository.findOne({
+      where: { user: { id: userId } },
+      relations: { event: true },
+    });
+    if (!profile) {
+      throw new NotFoundException(`Profil organisateur pour l'utilisateur #${userId} non trouvé`);
+    }
+    return profile;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} profilOrganisateur`;
+  async update(id: string, dto: UpdateOrganizerProfileDto): Promise<OrganizerProfile> {
+    const profile = await this.findOne(id);
+    Object.assign(profile, dto);
+    return await this.organizerProfileRepository.save(profile);
+  }
+
+  async updateVerificationStatut(
+    id: string,
+    statut: StatutVerification,
+  ): Promise<OrganizerProfile> {
+    const profile = await this.findOne(id);
+    profile.verificationStatut = statut;
+    return await this.organizerProfileRepository.save(profile);
+  }
+
+  async remove(id: string): Promise<void> {
+    const profile = await this.findOne(id);
+    await this.organizerProfileRepository.remove(profile);
   }
 }
