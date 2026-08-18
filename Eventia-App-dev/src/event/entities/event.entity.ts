@@ -26,11 +26,11 @@ export class Event extends BaseEntity {
   @Column()
   category!: string;
 
-  @Column()
-  placeName!: string;
+  @Column({ nullable: true })
+  placeName?: string;
 
-  @Column()
-  adress!: string;
+  @Column({ nullable: true })
+  adress?: string;
 
   @Column({ nullable: true })
   longitude?: string;

@@ -1,5 +1,6 @@
 import {
   Injectable,
+  ConflictException,
   NotFoundException,
   Logger,
   InternalServerErrorException,
@@ -21,6 +22,12 @@ export class OrganizerProfileService {
   private readonly logger = new Logger(OrganizerProfileService.name);
 
   async create(dto: CreateOrganizerProfileDto, userId: string): Promise<OrganizerProfile> {
+    const existing = await this.organizerProfileRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (existing) {
+      throw new ConflictException('Un profil organisateur existe déjà pour cet utilisateur');
+    }
     try {
       const profile = this.organizerProfileRepository.create({
         ...dto,

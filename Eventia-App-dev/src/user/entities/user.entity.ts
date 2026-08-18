@@ -5,6 +5,7 @@ import {
   OneToOne,
   OneToMany,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { Event } from 'src/event/entities/event.entity';
 import { Order } from 'src/order/entities/order.entity';
@@ -22,6 +23,7 @@ export class User extends BaseEntity {
   email!: string;
 
   @Column()
+  @Exclude()
   password!: string;
 
   @Column({

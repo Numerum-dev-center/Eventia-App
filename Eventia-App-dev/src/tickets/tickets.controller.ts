@@ -53,6 +53,7 @@ export class TicketController {
   }
 
   @Get('code/:code')
+  @UseGuards(JwtAuthGuard)
   findByCode(@Param('code') code: string) {
     return this.ticketService.findByCode(code);
   }

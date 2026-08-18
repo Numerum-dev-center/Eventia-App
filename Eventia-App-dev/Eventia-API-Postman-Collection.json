@@ -10,6 +10,7 @@
     { "key": "token", "value": "" },
     { "key": "organizerToken", "value": "" },
     { "key": "adminToken", "value": "" },
+    { "key": "clientToken", "value": "" },
     { "key": "userId", "value": "" },
     { "key": "organizerId", "value": "" },
     { "key": "eventId", "value": "" },
@@ -17,7 +18,11 @@
     { "key": "orderId", "value": "" },
     { "key": "ticketId", "value": "" },
     { "key": "paymentId", "value": "" },
-    { "key": "invoiceId", "value": "" }
+    { "key": "invoiceId", "value": "" },
+    { "key": "notificationId", "value": "" },
+    { "key": "eventCategoryId", "value": "" },
+    { "key": "promoCodeId", "value": "" },
+    { "key": "commissionId", "value": "" }
   ],
   "auth": {
     "type": "bearer",
@@ -121,6 +126,29 @@
             "body": {
               "mode": "raw",
               "raw": "{\n  \"email\": \"organizer@test.com\",\n  \"password\": \"Test@1234\"\n}"
+            }
+          }
+        },
+        {
+          "name": "4.1 Connexion Admin → Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.accessToken) { pm.collectionVariables.set('adminToken', json.accessToken); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/connexion", "host": ["{{baseUrl}}"], "path": ["auth", "connexion"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@eventia.com\",\n  \"password\": \"Admin@1234\"\n}"
             }
           }
         },
@@ -318,7 +346,30 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Festival Afrobeat Lomé 2026\",\n  \"description\": \"Le plus grand festival de musique afrobeat d'Afrique de l'Ouest\",\n  \"category\": \"Concert\",\n  \"placeName\": \"Stade de Kégué\",\n  \"adress\": \"Boulevard du 13 Janvier, Lomé\",\n  \"longitude\": \"1.2255\",\n  \"latitude\": \"6.1256\",\n  \"startDate\": \"2026-12-20T20:00:00.000Z\",\n  \"endDate\": \"2026-12-21T04:00:00.000Z\",\n  \"bannerImage\": \"https://example.com/banner.jpg\",\n  \"ticketsCategories\": [\n    {\n      \"name\": \"Standard\",\n      \"price\": \"5000\",\n      \"totalQuantity\": 500,\n      \"limitByPerson\": 4\n    },\n    {\n      \"name\": \"VIP\",\n      \"price\": \"15000\",\n      \"totalQuantity\": 100,\n      \"limitByPerson\": 2\n    },\n    {\n      \"name\": \"Early Bird\",\n      \"price\": \"3000\",\n      \"totalQuantity\": 200,\n      \"limitByPerson\": 4\n    }\n  ]\n}"
+              "raw": "{\n  \"title\": \"Festival Afrobeat Lomé 2026\",\n  \"description\": \"Le plus grand festival de musique afrobeat d'Afrique de l'Ouest\",\n  \"category\": \"Concert\",\n  \"locationType\": \"physical\",\n  \"maxCapacity\": 5000,\n  \"placeName\": \"Stade de Kégué\",\n  \"adress\": \"Boulevard du 13 Janvier, Lomé\",\n  \"longitude\": \"1.2255\",\n  \"latitude\": \"6.1256\",\n  \"startDate\": \"2026-12-20T20:00:00.000Z\",\n  \"endDate\": \"2026-12-21T04:00:00.000Z\",\n  \"bannerImage\": \"https://example.com/banner.jpg\",\n  \"ticketsCategories\": [\n    {\n      \"name\": \"Standard\",\n      \"price\": \"5000\",\n      \"totalQuantity\": 500,\n      \"limitByPerson\": 4\n    },\n    {\n      \"name\": \"VIP\",\n      \"price\": \"15000\",\n      \"totalQuantity\": 100,\n      \"limitByPerson\": 2\n    },\n    {\n      \"name\": \"Early Bird\",\n      \"price\": \"3000\",\n      \"totalQuantity\": 200,\n      \"limitByPerson\": 4\n    }\n  ]\n}"
+            }
+          }
+        },
+        {
+          "name": "Créer événement Online",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('eventId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/event", "host": ["{{baseUrl}}"], "path": ["event"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Conférence Tech Africa\",\n  \"description\": \"Conférence tech pan-africaine\",\n  \"category\": \"Conférence\",\n  \"locationType\": \"online\",\n  \"onlineUrl\": \"https://zoom.us/j/123456\",\n  \"startDate\": \"2026-11-15T09:00:00.000Z\",\n  \"endDate\": \"2026-11-15T17:00:00.000Z\"\n}"
             }
           }
         },
@@ -375,6 +426,21 @@
             "url": { "raw": "{{baseUrl}}/event/{{eventId}}/statut", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}", "statut"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Cancelled\"\n}" }
+          }
+        },
+        {
+          "name": "Upload média",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/media/upload/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["media", "upload", "{{eventId}}"] },
+            "header": [{ "key": "Content-Type", "value": "multipart/form-data" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": "" }
+              ]
+            },
+            "description": "Endpoint de téléchargement de média (multipart/form-data)"
           }
         },
         {
@@ -658,6 +724,15 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Paid\",\n  \"externalReference\": \"MP-2026-001-CONFIRMED\"\n}" }
           }
+        },
+        {
+          "name": "Rembourser paiement",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/payment/{{paymentId}}/refund", "host": ["{{baseUrl}}"], "path": ["payment", "{{paymentId}}", "refund"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
         }
       ]
     },
@@ -759,6 +834,173 @@
           "request": {
             "method": "GET",
             "url": { "raw": "{{baseUrl}}/dashboard/activity", "host": ["{{baseUrl}}"], "path": ["dashboard", "activity"] }
+          }
+        },
+        {
+          "name": "Export participants CSV",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/dashboard/event/{{eventId}}/export-participants", "host": ["{{baseUrl}}"], "path": ["dashboard", "event", "{{eventId}}", "export-participants"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Notifications",
+      "description": "Gestion des notifications utilisateur",
+      "item": [
+        {
+          "name": "Créer notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('notificationId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/notifications", "host": ["{{baseUrl}}"], "path": ["notifications"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"event_published\",\n  \"title\": \"Événement publié\",\n  \"message\": \"Votre événement a été publié !\",\n  \"userId\": \"{{userId}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Mes notifications",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/notifications", "host": ["{{baseUrl}}"], "path": ["notifications"] }
+          }
+        },
+        {
+          "name": "Nombre non lues",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/notifications/unread-count", "host": ["{{baseUrl}}"], "path": ["notifications", "unread-count"] }
+          }
+        },
+        {
+          "name": "Marquer comme lu",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/notifications/{{notificationId}}/read", "host": ["{{baseUrl}}"], "path": ["notifications", "{{notificationId}}", "read"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }]
+          }
+        },
+        {
+          "name": "Tout marquer comme lu",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/notifications/read-all", "host": ["{{baseUrl}}"], "path": ["notifications", "read-all"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Event Categories",
+      "description": "Gestion des catégories d'événements",
+      "item": [
+        {
+          "name": "Créer catégorie",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('eventCategoryId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/event-category", "host": ["{{baseUrl}}"], "path": ["event-category"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Musique\",\n  \"slug\": \"musique\",\n  \"description\": \"Concerts et festivals musicaux\",\n  \"icon\": \"🎵\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Liste catégories",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/event-category", "host": ["{{baseUrl}}"], "path": ["event-category"] }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Promo Codes",
+      "description": "Gestion des codes promotionnels",
+      "item": [
+        {
+          "name": "Créer code promo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.id) { pm.collectionVariables.set('promoCodeId', json.id); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/promo-code", "host": ["{{baseUrl}}"], "path": ["promo-code"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FESTIVO20\",\n  \"type\": \"percentage\",\n  \"value\": 20,\n  \"maxUses\": 100,\n  \"validUntil\": \"2026-12-31T23:59:00.000Z\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Valider code promo",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/promo-code/validate", "host": ["{{baseUrl}}"], "path": ["promo-code", "validate"] },
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"FESTIVO20\",\n  \"eventId\": \"{{eventId}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Commissions",
+      "description": "Gestion des commissions sur les ventes",
+      "item": [
+        {
+          "name": "Liste commissions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/commission", "host": ["{{baseUrl}}"], "path": ["commission"] }
+          }
+        },
+        {
+          "name": "Stats commissions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/commission/stats", "host": ["{{baseUrl}}"], "path": ["commission", "stats"] }
           }
         }
       ]
