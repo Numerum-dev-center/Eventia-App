@@ -19,7 +19,7 @@ export class NotificationService {
   async create(dto: CreateNotificationDto): Promise<Notification> {
     const user = await this.userRepository.findOne({ where: { id: dto.userId } });
     if (!user) {
-      throw new NotFoundException(`Utilisateur #${dto.userId} non trouvé`);
+      throw new NotFoundException(`User #${dto.userId} not found`);
     }
 
     const notification = this.notificationRepository.create({
@@ -73,7 +73,7 @@ export class NotificationService {
   async markAsRead(id: string): Promise<Notification> {
     const notification = await this.notificationRepository.findOne({ where: { id } });
     if (!notification) {
-      throw new NotFoundException(`Notification #${id} non trouvée`);
+      throw new NotFoundException(`Notification #${id} not found`);
     }
     notification.isRead = true;
     return await this.notificationRepository.save(notification);
@@ -89,7 +89,7 @@ export class NotificationService {
   async remove(id: string): Promise<void> {
     const notification = await this.notificationRepository.findOne({ where: { id } });
     if (!notification) {
-      throw new NotFoundException(`Notification #${id} non trouvée`);
+      throw new NotFoundException(`Notification #${id} not found`);
     }
     await this.notificationRepository.remove(notification);
   }

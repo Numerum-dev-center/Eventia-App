@@ -29,8 +29,8 @@ export class OrderService {
       });
       return await this.orderRepository.save(order);
     } catch (error) {
-      this.logger.error('Erreur lors de la création de la commande', error);
-      throw new InternalServerErrorException('Erreur lors de la création de la commande');
+      this.logger.error('Failed to create order. Please verify the client ID and try again.', error);
+      throw new InternalServerErrorException('Failed to create order. Please verify the client ID and try again.');
     }
   }
 

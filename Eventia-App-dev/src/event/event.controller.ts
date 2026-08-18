@@ -65,12 +65,12 @@ export class EventController {
     return this.eventService.update(id, updateEventDto, user.id, user.role);
   }
 
-  @Patch(':id/statut')
+  @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER, Role.ADMIN)
   updateStatut(
     @Param('id') id: string,
-    @Body('statut') statut: EventStatut,
+    @Body('status') statut: EventStatut,
   ) {
     return this.eventService.updateStatut(id, statut);
   }

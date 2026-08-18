@@ -4,14 +4,14 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 export class ScanTicketDto {
   @ApiProperty({
     description:
-      'Valeur scannée (le code unique du billet, ex: uniqueCodeCrypto)',
+      'Scanned value (the unique ticket code, e.g., uniqueCodeCrypto)',
   })
   @IsString()
   @IsNotEmpty()
   qrData!: string;
 
   @ApiPropertyOptional({
-    description: "Identifiant de l'appareil de l'agent de contrôle",
+    description: "Control agent's device identifier",
   })
   @IsOptional()
   @IsString()
@@ -19,7 +19,7 @@ export class ScanTicketDto {
   deviceId?: string;
 
   @ApiPropertyOptional({
-    description: "Localisation du scan (ex: 'Entrée Nord', 'Porte A')",
+    description: "Scan location (e.g., 'North Entrance', 'Gate A')",
   })
   @IsOptional()
   @IsString()

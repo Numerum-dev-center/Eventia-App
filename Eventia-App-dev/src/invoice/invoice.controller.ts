@@ -55,12 +55,12 @@ export class InvoiceController {
     return this.invoiceService.findOne(id);
   }
 
-  @Patch(':id/statut')
+  @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   updateStatut(
     @Param('id') id: string,
-    @Body('statut') statut: InvoiceStatut,
+    @Body('status') statut: InvoiceStatut,
   ) {
     return this.invoiceService.updateStatut(id, statut);
   }

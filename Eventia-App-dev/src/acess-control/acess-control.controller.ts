@@ -15,7 +15,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Role } from 'src/common/role.enum';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
-@Controller('acess-control')
+@Controller('access-control')
 export class AcessControlController {
   constructor(private readonly acessControlService: AcessControlService) {}
 

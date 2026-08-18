@@ -42,8 +42,8 @@ export class TicketService {
 
       return tickets;
     } catch (error) {
-      this.logger.error('Erreur lors de la création des tickets', error);
-      throw new InternalServerErrorException('Erreur lors de la création des tickets');
+      this.logger.error('Failed to create tickets. Please verify the order and category.', error);
+      throw new InternalServerErrorException('Failed to create tickets. Please verify the order and category.');
     }
   }
 
@@ -88,7 +88,7 @@ export class TicketService {
     const ticket = await this.findOne(id);
 
     if (ticket.validationStatut !== TicketValidationStatut.VALID) {
-      throw new NotFoundException('Billet déjà utilisé ou invalide');
+      throw new NotFoundException('Ticket already used or invalid.');
     }
 
     ticket.validationStatut = TicketValidationStatut.SCANNNED;

@@ -34,7 +34,7 @@ export class AuthService {
   async register(dto: RegisterDto, role: Role) {
     // 1. Vérification basique de sécurité
     if (dto.password !== dto.confirmPassword) {
-      throw new BadRequestException('Les mots de passe ne correspondent pas');
+      throw new BadRequestException('Passwords do not match. Please ensure "password" and "confirmPassword" are identical.');
     }
 
     // 2. Appel à ton service User
@@ -45,7 +45,7 @@ export class AuthService {
     await this.userService.requestActivationToken(newUser.id);
     
     return { 
-      message: 'Compte créé avec succès. Veuillez vérifier votre email pour le code de validation.' 
+      message: 'Account created successfully. Please check your email for the verification code.' 
     };
   }
 
@@ -86,14 +86,14 @@ private determineRole(email: string): Role {
   // 1. Typage strict de 'req' avec l'interface Request d'Express
   async login(loginDto: LoginDto, req: Request) {
     const user = await this.userService.loadByUsername(loginDto.email.toLowerCase());
-    if (!user) throw new UnauthorizedException('Identifiants incorrects');
+    if (!user) throw new UnauthorizedException('Invalid email or password. No account found with this email.');
 
     if (user.authProvider === 'google') {
-    throw new UnauthorizedException('Ce compte est lié à Google. Utilisez le bouton "Connexion avec Google".');
+    throw new UnauthorizedException('This account is linked to Google. Please use "Login with Google" instead.');
     }
 
     const isPasswordValid = await comparePassword(loginDto.password, user.password);
-    if (!isPasswordValid) throw new UnauthorizedException('Identifiants incorrects');
+    if (!isPasswordValid) throw new UnauthorizedException('Invalid email or password. The password is incorrect.');
 
     // 2. Typage explicite du payload
     const payload: JwtPayload = { email: user.email, sub: user.id };
@@ -115,7 +115,7 @@ private determineRole(email: string): Role {
     });
 
     return { 
-      message: 'Connexion réussie',
+      message: 'Login successful',
       email: user.email,
       role: user.role,
       accessToken, 
@@ -128,7 +128,7 @@ private determineRole(email: string): Role {
   const user = await this.userRepository.findOne({ where: { activationToken: token } });
 
   if (!user) {
-    throw new BadRequestException("Jeton d'activation invalide ou expiré.");
+    throw new BadRequestException('Invalid or expired activation token. Please request a new one.');
   }
 
   // 2. Activer le compte et vider le token
@@ -170,12 +170,12 @@ private determineRole(email: string): Role {
       const session = await this.sessionsService.findByToken(refreshToken);
       
       if (!session) {
-        throw new UnauthorizedException('Session invalide ou déjà révoquée');
+        throw new UnauthorizedException('Invalid or revoked session. Please log in again.');
       }
 
       // 3. Vérifier si la session n'est pas expirée
       if (new Date() > session.expirationDate) {
-        throw new UnauthorizedException('Session expirée, veuillez vous reconnecter');
+        throw new UnauthorizedException('Session expired. Please log in again.');
       }
 
       // 4. Générer un nouveau Access Token (et optionnellement un nouveau Refresh Token)
@@ -187,13 +187,13 @@ private determineRole(email: string): Role {
       return { accessToken: newAccessToken };
       
     } catch (err) {
-      throw new UnauthorizedException('Token de rafraîchissement invalide');
+      throw new UnauthorizedException('Invalid refresh token. The token is malformed or expired.');
     }
  }
 
   async logout(userId: string): Promise<void> {
     const user = await this.userService.findOne(userId);
-    if (!user) throw new NotFoundException('User introuvable');
+    if (!user) throw new NotFoundException('User not found. Unable to logout.');
     await this.sessionsService.removeAllByUser(userId);
   }
 }

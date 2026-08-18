@@ -52,7 +52,7 @@
           ],
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/auth/Register-client", "host": ["{{baseUrl}}"], "path": ["auth", "Register-client"] },
+            "url": { "raw": "{{baseUrl}}/auth/register-client", "host": ["{{baseUrl}}"], "path": ["auth", "register-client"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
@@ -75,7 +75,7 @@
           ],
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/auth/Register-organisateur", "host": ["{{baseUrl}}"], "path": ["auth", "Register-organisateur"] },
+            "url": { "raw": "{{baseUrl}}/auth/register-organizer", "host": ["{{baseUrl}}"], "path": ["auth", "register-organizer"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
@@ -98,7 +98,7 @@
           ],
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/auth/connexion", "host": ["{{baseUrl}}"], "path": ["auth", "connexion"] },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
@@ -121,7 +121,7 @@
           ],
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/auth/connexion", "host": ["{{baseUrl}}"], "path": ["auth", "connexion"] },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
@@ -144,7 +144,7 @@
           ],
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/auth/connexion", "host": ["{{baseUrl}}"], "path": ["auth", "connexion"] },
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth", "login"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
@@ -156,7 +156,7 @@
           "name": "5. Refresh Token",
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/auth/refreshtoken", "host": ["{{baseUrl}}"], "path": ["auth", "refreshtoken"] },
+            "url": { "raw": "{{baseUrl}}/auth/refresh-token", "host": ["{{baseUrl}}"], "path": ["auth", "refresh-token"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"<refresh_token>\"\n}" }
           }
@@ -192,7 +192,7 @@
           "name": "9. Déconnexion",
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/auth/deconnexion", "host": ["{{baseUrl}}"], "path": ["auth", "deconnexion"] },
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth", "logout"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }]
           }
         }
@@ -207,14 +207,14 @@
           "name": "Liste users (Admin)",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/user/list", "host": ["{{baseUrl}}"], "path": ["user", "list"] }
+            "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] }
           }
         },
         {
           "name": "Détails user",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/user/details/{{userId}}", "host": ["{{baseUrl}}"], "path": ["user", "details", "{{userId}}"] }
+            "url": { "raw": "{{baseUrl}}/user/{{userId}}", "host": ["{{baseUrl}}"], "path": ["user", "{{userId}}"] }
           }
         },
         {
@@ -230,7 +230,7 @@
           "name": "Modifier profil client",
           "request": {
             "method": "PATCH",
-            "url": { "raw": "{{baseUrl}}/user/me/profil-client", "host": ["{{baseUrl}}"], "path": ["user", "me", "profil-client"] },
+            "url": { "raw": "{{baseUrl}}/user/me/profile-client", "host": ["{{baseUrl}}"], "path": ["user", "me", "profile-client"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"lastName\": \"Dupont\",\n  \"firstName\": \"Jean\",\n  \"phoneNumber\": \"+228 90 12 34 56\",\n  \"homeAdress\": \"Lomé, Togo\"\n}" }
           }
@@ -239,7 +239,7 @@
           "name": "Modifier profil organisateur",
           "request": {
             "method": "PATCH",
-            "url": { "raw": "{{baseUrl}}/user/me/profile-organisateur", "host": ["{{baseUrl}}"], "path": ["user", "me", "profile-organisateur"] },
+            "url": { "raw": "{{baseUrl}}/user/me/profile-organizer", "host": ["{{baseUrl}}"], "path": ["user", "me", "profile-organizer"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"lastName\": \"Koffi\",\n  \"firstName\": \"Kofi\",\n  \"organizerProfile\": {\n    \"societyName\": \"EventCorp Togo\",\n    \"brand\": \"EventCorp\",\n    \"description\": \"Organisateur d'événements à Lomé\"\n  }\n}" }
           }
@@ -248,7 +248,7 @@
           "name": "Supprimer user (Admin)",
           "request": {
             "method": "DELETE",
-            "url": { "raw": "{{baseUrl}}/user/delete/{{userId}}", "host": ["{{baseUrl}}"], "path": ["user", "delete", "{{userId}}"] }
+            "url": { "raw": "{{baseUrl}}/user/{{userId}}", "host": ["{{baseUrl}}"], "path": ["user", "{{userId}}"] }
           }
         }
       ]
@@ -414,7 +414,7 @@
           "name": "Publier événement",
           "request": {
             "method": "PATCH",
-            "url": { "raw": "{{baseUrl}}/event/{{eventId}}/statut", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}", "statut"] },
+            "url": { "raw": "{{baseUrl}}/event/{{eventId}}/status", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}", "statut"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Published\"\n}" }
           }
@@ -423,7 +423,7 @@
           "name": "Annuler événement",
           "request": {
             "method": "PATCH",
-            "url": { "raw": "{{baseUrl}}/event/{{eventId}}/statut", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}", "statut"] },
+            "url": { "raw": "{{baseUrl}}/event/{{eventId}}/status", "host": ["{{baseUrl}}"], "path": ["event", "{{eventId}}", "statut"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"statut\": \"Cancelled\"\n}" }
           }
@@ -796,7 +796,7 @@
           "name": "Valider facture",
           "request": {
             "method": "PATCH",
-            "url": { "raw": "{{baseUrl}}/invoice/{{invoiceId}}/statut", "host": ["{{baseUrl}}"], "path": ["invoice", "{{invoiceId}}", "statut"] },
+            "url": { "raw": "{{baseUrl}}/invoice/{{invoiceId}}/status", "host": ["{{baseUrl}}"], "path": ["invoice", "{{invoiceId}}", "statut"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": { "mode": "raw", "raw": "{\n  \"statut\": \"issued\"\n}" }
           }
@@ -1014,7 +1014,7 @@
           "name": "Valider billet (scan)",
           "request": {
             "method": "POST",
-            "url": { "raw": "{{baseUrl}}/acess-control/validate", "host": ["{{baseUrl}}"], "path": ["acess-control", "validate"] },
+            "url": { "raw": "{{baseUrl}}/access-control/validate", "host": ["{{baseUrl}}"], "path": ["access-control", "validate"] },
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
@@ -1026,21 +1026,21 @@
           "name": "Journal complet",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/acess-control", "host": ["{{baseUrl}}"], "path": ["acess-control"] }
+            "url": { "raw": "{{baseUrl}}/access-control", "host": ["{{baseUrl}}"], "path": ["access-control"] }
           }
         },
         {
           "name": "Journal par événement",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/acess-control/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["acess-control", "event", "{{eventId}}"] }
+            "url": { "raw": "{{baseUrl}}/access-control/event/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["access-control", "event", "{{eventId}}"] }
           }
         },
         {
           "name": "Stats entrées par événement",
           "request": {
             "method": "GET",
-            "url": { "raw": "{{baseUrl}}/acess-control/event/{{eventId}}/stats", "host": ["{{baseUrl}}"], "path": ["acess-control", "event", "{{eventId}}", "stats"] }
+            "url": { "raw": "{{baseUrl}}/access-control/event/{{eventId}}/stats", "host": ["{{baseUrl}}"], "path": ["access-control", "event", "{{eventId}}", "stats"] }
           }
         }
       ]

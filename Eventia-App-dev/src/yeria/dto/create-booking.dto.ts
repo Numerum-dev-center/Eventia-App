@@ -2,18 +2,18 @@ import { IsInt, IsNotEmpty, IsOptional, IsString, Min, Max } from 'class-validat
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBookingDto {
-  @ApiProperty({ description: 'Identifiant de l\u2019événement' })
+  @ApiProperty({ description: 'Event identifier' })
   @IsString()
   @IsNotEmpty()
   eventId!: string;
 
-  @ApiProperty({ description: 'Identifiant de la catégorie de billet' })
+  @ApiProperty({ description: 'Ticket category identifier' })
   @IsString()
   @IsNotEmpty()
   ticketCategoryId!: string;
 
   @ApiProperty({
-    description: 'Nombre de billets demandés',
+    description: 'Number of tickets requested',
     example: 2,
   })
   @IsInt()
@@ -22,7 +22,7 @@ export class CreateBookingDto {
   quantity!: number;
 
   @ApiPropertyOptional({
-    description: 'Identifiant Eventia de l\u2019utilisateur (sinon via jeton Yeria)',
+    description: 'Eventia user identifier (otherwise via Yeria token)',
   })
   @IsOptional()
   @IsString()

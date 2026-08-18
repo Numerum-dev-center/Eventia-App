@@ -7,28 +7,28 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 class OrganizerProfileDetailsDto {
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ description: "Nom de l'entreprise", example: 'Eventia Corp' })
+  @ApiPropertyOptional({ description: "Company name", example: 'Eventia Corp' })
   societyName?: string;
 
   @IsOptional()
   @IsString()
-  @ApiPropertyOptional({ description: "URL ou nom du fichier logo", example: 'logo.png' })
+  @ApiPropertyOptional({ description: "Logo file URL or name", example: 'logo.png' })
   brand?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ description: "Description de l'organisation", example: 'Nous organisons des événements tech.' })
+  @ApiPropertyOptional({ description: "Organization description", example: 'We organize tech events.' })
   description?: string;
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ description: "URL ou chemin des documents", example: 'justificatif_kbis.pdf' })
+  @ApiPropertyOptional({ description: "Document URL or path", example: 'justificatif_kbis.pdf' })
   officialFiles?: string;
 }
 
 export class UpdateOrganizerDto extends BaseUpdateProfileDto {
   @IsOptional()
-  @ApiPropertyOptional({ type: OrganizerProfileDetailsDto, description: "Détails spécifiques du profil organisateur" })
+  @ApiPropertyOptional({ type: OrganizerProfileDetailsDto, description: "Organizer profile specific details" })
   @ValidateNested()
   @Type(() => OrganizerProfileDetailsDto)
   organizerProfile?: OrganizerProfileDetailsDto;

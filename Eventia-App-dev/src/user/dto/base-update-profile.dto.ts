@@ -7,7 +7,7 @@ export class BaseUpdateProfileDto {
   @IsString() 
   @ApiProperty({ 
     example: 'John', 
-    description: 'Le nom de l \'utilisateur' 
+    description: 'User last name'
   })
   lastName?: string;
 
@@ -15,7 +15,7 @@ export class BaseUpdateProfileDto {
   @IsString() 
   @ApiProperty({ 
     example: 'Doe Who', 
-    description: 'Le/les prénoms de l\'utilisateur' 
+    description: 'User first name(s)'
   })
   firstName?: string;
 
@@ -23,7 +23,7 @@ export class BaseUpdateProfileDto {
   @IsPhoneNumber() 
   @ApiProperty({ 
     example: '+22890542125', 
-    description: 'Le numéro de téléphone, toujours mettre l\'indicatif' 
+    description: 'Phone number, always include country code'
   })
   phoneNumber?: string;
 
@@ -31,7 +31,7 @@ export class BaseUpdateProfileDto {
   @IsString()
   @ApiProperty({ 
     example: 'Rue des évalas, 456', 
-    description: 'L\'adresse de l\'utilisateur' 
+    description: 'User home address'
   })
   homeAdress?: string;
 
@@ -39,7 +39,7 @@ export class BaseUpdateProfileDto {
   @IsEnum(Sex)
   @ApiProperty({ 
     example: 'Masculin', 
-    description: 'Le sexe de l\'utilisateur. Mettre Masculin ou Féminin. Respectez cette syntaxe' 
+    description: 'User gender. Enter Male or Female. Please follow this exact format.'
   })
   sex?: Sex;
 
@@ -47,7 +47,7 @@ export class BaseUpdateProfileDto {
   @IsDateString()
   @ApiProperty({ 
     example: '2000-05-22', 
-    description: 'La date de naissace est sous format AAAA-MM-DD' 
+    description: 'Birth date in YYYY-MM-DD format'
   })
   birthDate?: Date;
 }

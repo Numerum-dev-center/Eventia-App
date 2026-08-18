@@ -26,8 +26,8 @@ export class TicketCategoryService {
       });
       return await this.ticketCategoryRepository.save(category);
     } catch (error) {
-      this.logger.error('Erreur lors de la création de la catégorie', error);
-      throw new InternalServerErrorException('Erreur lors de la création de la catégorie');
+      this.logger.error('Failed to create ticket category. Please verify the event ID and data.', error);
+      throw new InternalServerErrorException('Failed to create ticket category. Please verify the event ID and data.');
     }
   }
 

@@ -21,7 +21,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     const user = await this.userService.findByEmail(payload.email);
     
     if (!user) {
-      throw new UnauthorizedException('Utilisateur introuvable');
+      throw new UnauthorizedException('User not found. Invalid or expired token.');
     }
     
     // Retourner l'utilisateur permet de le retrouver dans req.user

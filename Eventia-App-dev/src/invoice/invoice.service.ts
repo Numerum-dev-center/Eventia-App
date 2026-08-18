@@ -32,14 +32,14 @@ export class InvoiceService {
         where: { id: dto.orderId },
       });
       if (!order) {
-        throw new NotFoundException('Commande non trouvée');
+        throw new NotFoundException('Order not found.');
       }
 
       const existing = await this.invoiceRepository.findOne({
         where: { order: { id: dto.orderId } },
       });
       if (existing) {
-        throw new BadRequestException('Une facture existe déjà pour cette commande');
+        throw new BadRequestException('An invoice already exists for this order.');
       }
 
       const amountExcludingTax = Number(order.totalAmount);
@@ -63,8 +63,8 @@ export class InvoiceService {
       if (error instanceof NotFoundException || error instanceof BadRequestException) {
         throw error;
       }
-      this.logger.error('Erreur lors de la création de la facture', error);
-      throw new InternalServerErrorException('Erreur lors de la création de la facture');
+      this.logger.error('Failed to create invoice. An invoice may already exist for this order.', error);
+      throw new InternalServerErrorException('Failed to create invoice. An invoice may already exist for this order.');
     }
   }
 

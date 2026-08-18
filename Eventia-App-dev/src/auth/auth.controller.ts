@@ -36,27 +36,25 @@ export class AuthController {
   ) {}
 
   @Public() 
-  @Post('Register-client')
-  @ApiOperation({ summary: 'Register pour les clients' })
+  @Post('register-client')
+  @ApiOperation({ summary: 'Register a new client account' })
   @ApiBody({ type: RegisterDto})
-  async registerClient(@Body() RegisterDto: RegisterDto) {
-    console.log('DTO reçu:', RegisterDto);
-    return await this.authService.register(RegisterDto, Role.CLIENT);
+  async registerClient(@Body() registerDto: RegisterDto) {
+    return await this.authService.register(registerDto, Role.CLIENT);
   }
 
   @Public() 
-  @Post('Register-organisateur')
-  @ApiOperation({ summary: 'Register pour les organisateurs' })
+  @Post('register-organizer')
+  @ApiOperation({ summary: 'Register a new organizer account' })
   @ApiBody({ type: RegisterDto})
-  async registerOrganisateur(@Body() RegisterDto: RegisterDto) {
-    console.log('DTO reçu:', RegisterDto);
-    return await this.authService.register(RegisterDto, Role.ORGANIZER);
+  async registerOrganizer(@Body() registerDto: RegisterDto) {
+    return await this.authService.register(registerDto, Role.ORGANIZER);
   }
 
   @Public() 
   @Get('activate')
-  @ApiOperation({ summary: 'Activer le compte via le lien reçu par email' })
-  @ApiQuery({ name: 'token', type: 'string', description: 'Token d’activation unique' })
+  @ApiOperation({ summary: 'Activate account via email link' })
+  @ApiQuery({ name: 'token', type: 'string', description: 'Unique activation token' })
   async activateAccount(@Query('token') token: string, @Req() req: Request, @Res() res: Response) {
   try {
     // 1. Ton backend valide le token et active le compte
@@ -82,10 +80,10 @@ export class AuthController {
   @Public() // Très important : doit être accessible sans token
   @UseGuards(AuthGuard('google'))
   @ApiOperation({ 
-    summary: 'Initier la connexion avec Google', 
-    description: 'Redirige l\'utilisateur vers la page de consentement Google. Ne pas tester directement dans Swagger (provoque une erreur CORS).' 
+    summary: 'Initiate Google login', 
+    description: 'Redirects the user to the Google consent page. Do not test directly in Swagger (causes a CORS error).'
   })
-  @ApiResponse({ status: 302, description: 'Redirection vers Google.' })
+  @ApiResponse({ status: 302, description: 'Redirect to Google.' })
   async googleAuth() {
     // Cette fonction ne sera jamais exécutée, Passport intercepte la requête
   }
@@ -95,10 +93,10 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   @ApiExcludeEndpoint()
   @ApiOperation({ 
-    summary: 'Callback Google OAuth', 
-    description: 'Endpoint appelé par Google après l\'authentification. Génère les tokens et redirige vers le frontend.' 
+    summary: 'Google OAuth callback', 
+    description: 'Endpoint called by Google after authentication. Generates tokens and redirects to the frontend.'
   })
-  @ApiResponse({ status: 302, description: 'Redirection vers le Front-end avec accessToken et refreshToken dans l\'URL.' })
+  @ApiResponse({ status: 302, description: 'Redirect to the Frontend with accessToken and refreshToken in the URL.' })
   async googleAuthRedirect(@Req() req, @Res() res) {
   // 1. Validation de l'utilisateur Google
   const user = await this.authService.validateGoogleUser(req.user);
@@ -117,9 +115,9 @@ export class AuthController {
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Demander un email de réinitialisation de mot de passe' })
+  @ApiOperation({ summary: 'Request a password reset email' })
   @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string', example: 'user@example.com' } } } })
-  @ApiResponse({ status: 200, description: 'Email envoyé avec succès.' })
+  @ApiResponse({ status: 200, description: 'Email sent successfully.' })
   async forgotPassword(@Body('email') email: string) {
     return await this.utilisateurService.forgotPassword(email);
   }
@@ -127,9 +125,9 @@ export class AuthController {
   @Public()
   @Post('resend-code')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Renvoyer le code de vérification' })
+  @ApiOperation({ summary: 'Resend verification code' })
   @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string', example: 'user@example.com' } } } })
-  @ApiResponse({ status: 200, description: 'Code renvoyé avec succès.' })
+  @ApiResponse({ status: 200, description: 'Code resent successfully.' })
   async resendCode(@Body('email') email: string) {
     return await this.utilisateurService.resendCode(email);
   }
@@ -137,9 +135,9 @@ export class AuthController {
   @Public()
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Réinitialiser le mot de passe avec le code reçu' })
+  @ApiOperation({ summary: 'Reset password with received code' })
   @ApiBody({ type: ResetPasswordDto }) 
-  @ApiResponse({ status: 200, description: 'Mot de passe réinitialisé.' })
+  @ApiResponse({ status: 200, description: 'Password reset successfully.' })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
   if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
     throw new BadRequestException('Les mots de passe ne correspondent pas');
@@ -152,31 +150,31 @@ export class AuthController {
 }
 
   @Public()
-  @Post('refreshtoken')
+  @Post('refresh-token')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Rafraîchir le jeton d\'accès via le cookie' })
-  @ApiCookieAuth() // Indique que cette route nécessite un cookie
-  @ApiResponse({ status: 200, description: 'Nouveau accessToken retourné.' })
+  @ApiOperation({ summary: 'Refresh access token via cookie' })
+  @ApiCookieAuth()
+  @ApiResponse({ status: 200, description: 'New accessToken returned.' })
   async refresh(@Req() req: Request) {
   const refreshToken = req.cookies['refreshToken'];
-  if (!refreshToken) throw new UnauthorizedException('Refresh token manquant');
+  if (!refreshToken) throw new UnauthorizedException('Refresh token is missing from cookies');
   
   return await this.authService.refreshTokens(refreshToken);
   }
 
   @Public() 
   @HttpCode(HttpStatus.OK)
-  @Post('connexion')
-  @ApiOperation({ summary: 'Connexion utilisateur et création de session' })
+  @Post('login')
+  @ApiOperation({ summary: 'User login and session creation' })
   @ApiBody({ type: LoginDto })
   @ApiResponse({ 
     status: 200, 
-    description: 'Connexion réussie, Refresh Token mis en cookie.',
+    description: 'Login successful, Refresh Token set in cookie.',
     schema: {
       example: {
-        message: 'Connexion réussie',
-        email: 'exemple@domaine.com',
-        role: 'utilisateur',
+        message: 'Login successful',
+        email: 'user@example.com',
+        role: 'user',
         accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
       }
     }
@@ -202,10 +200,10 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('deconnexion')
+  @Post('logout')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Déconnexion et suppression de session' })
-  @ApiResponse({ status: 200, description: 'Déconnexion réussie.' })
+  @ApiOperation({ summary: 'Logout and session deletion' })
+  @ApiResponse({ status: 200, description: 'Logout successful.' })
   async logout(@Res({ passthrough: true }) res: Response, @GetUser() user: any) {
   // 1. Supprimer le cookie côté client
     res.clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' });

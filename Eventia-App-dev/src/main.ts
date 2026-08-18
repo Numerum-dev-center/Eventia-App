@@ -15,7 +15,6 @@ import { join } from 'path';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  // 1. Configuration des Middlewares
   app.use(cookieParser());
   
   app.enableCors({
@@ -38,10 +37,10 @@ async function bootstrap() {
 
   app.useStaticAssets(join(__dirname, '..', 'uploads'), { prefix: '/uploads' });
 
-  // 2. Configuration Swagger (AVANT le listen)
+  // Swagger configuration
   const config = new DocumentBuilder()
-    .setTitle('API de Eventia')
-    .setDescription('La documentation de notre API')
+    .setTitle('Eventia API')
+    .setDescription('Eventia Event Platform - Backend API documentation')
     .setVersion('1.0')
     .addTag('users')
     .build();
@@ -49,7 +48,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document);
 
-  // 3. Démarrage du serveur 
+  // Start server
   await app.listen(process.env.PORT ?? 3000);
 }
 

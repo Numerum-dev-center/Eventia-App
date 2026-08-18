@@ -7,6 +7,6 @@ export class VerifyResetCodeDto {
 
   @IsString()
   @IsNotEmpty()
-  @Length(6, 6, { message: 'Le code doit contenir 6 chiffres' })
+  @Length(6, 6, { message: 'The code must contain 6 digits' })
   code!: string;
 }

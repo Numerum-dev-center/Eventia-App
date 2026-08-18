@@ -3,7 +3,7 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 
 export class EventFilterDto {
   @ApiPropertyOptional({
-    description: 'Catégorie d\u2019événement à afficher (vide = toutes)',
+    description: 'Event category to display (empty = all)',
   })
   @IsOptional()
   @IsString()

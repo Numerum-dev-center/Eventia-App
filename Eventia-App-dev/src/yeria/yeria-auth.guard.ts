@@ -32,7 +32,7 @@ export class YeriaAuthGuard implements CanActivate {
       )) as YeriaTokenClaims;
       return true;
     } catch (error) {
-      throw new UnauthorizedException('Jeton Yeria invalide ou expiré');
+      throw new UnauthorizedException('Invalid or expired Yeria token.');
     }
   }
 }

@@ -717,7 +717,7 @@ export class YeriaService {
 
     if (!event) {
       this.logger.warn(`Événement introuvable : ${eventId}`);
-      throw new NotFoundException('Événement introuvable');
+      throw new NotFoundException('Event not found.');
     }
 
     return event;
@@ -733,7 +733,7 @@ export class YeriaService {
         where: { id: userId },
       });
       if (!user) {
-        throw new NotFoundException('Utilisateur introuvable');
+        throw new NotFoundException('User not found. Unable to complete booking.');
       }
       return user;
     }

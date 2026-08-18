@@ -58,7 +58,7 @@ export class MailService {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(`Erreur API Brevo: ${JSON.stringify(errorData)}`);
+        throw new Error(`Brevo API error: ${JSON.stringify(errorData)}`);
       }
 
       this.logger.log(`E-mail d'activation envoyé avec succès à ${email}`);

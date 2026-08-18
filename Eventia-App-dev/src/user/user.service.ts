@@ -45,7 +45,7 @@ export class UserService {
       where: { email: dto.email.toLowerCase() },
     });
     if (emailExists) {
-      throw new ConflictException('Cet email est déjà utilisé');
+      throw new ConflictException('This email is already registered. Please use a different email or log in.');
     }
 
     try {
@@ -69,9 +69,9 @@ export class UserService {
 
     return await this.userRepository.save(user);
   }catch (error) {
-      this.logger.error('Erreur inscription:', error);
+      this.logger.error('Registration error:', error);
       throw new InternalServerErrorException(
-        'Erreur lors de la création du compte',
+        'Failed to create account. Please try again later.',
       );
     }
   }
@@ -133,11 +133,11 @@ async activateByToken(token: string) {
   });
 
   if (!user) {
-    throw new BadRequestException('Lien d’activation invalide');
+    throw new BadRequestException('Invalid activation link. No account found.');
   }
 
   if (user.activationTokenExpires && new Date() > user.activationTokenExpires) {
-    throw new BadRequestException('Le lien d’activation a expiré');
+    throw new BadRequestException('Activation link has expired. Please request a new one.');
   }
 
   // 1. Activer le compte et nettoyer le token
@@ -152,7 +152,7 @@ async activateByToken(token: string) {
 
   // 3. Retourner le token et les infos au Front-end
   return {
-    message: 'Compte activé avec succès !',
+    message: 'Account activated successfully!',
     access_token: accessToken,
     user: {
       id: user.id,
@@ -190,11 +190,11 @@ async activateByToken(token: string) {
   const user = await this.userRepository.findOne({ where: { id: userId } });
 
   if (!user || user.twoFASecretCode !== submittedCode) {
-    throw new BadRequestException('Code invalide');
+    throw new BadRequestException('Invalid activation code. Please check the code sent to your email.');
   }
 
   if (user.dateExpirationCode && new Date() > user.dateExpirationCode) {
-    throw new BadRequestException('Le code a expiré');
+    throw new BadRequestException('Activation code has expired. Please request a new one.');
   }
 
   // Tout est bon, on active le compte
@@ -205,7 +205,7 @@ async activateByToken(token: string) {
 // ÉTAPE 1 : Demande de réinitialisation (envoi du code)
   async forgotPassword(email: string) {
     const user = await this.userRepository.findOne({ where: { email } });
-    if (!user) throw new NotFoundException('user non trouvé');
+  if (!user) throw new NotFoundException('No account found with this email address.');
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiration = new Date();
@@ -224,7 +224,7 @@ async activateByToken(token: string) {
         !user.dateExpirationCode || // 1. Vérifie si le champ est null ou undefined
         new Date() > user.dateExpirationCode // 2. Maintenant TypeScript sait que c'est une Date
         ) {
-      throw new BadRequestException('Code invalide ou expiré');
+      throw new BadRequestException('Invalid or expired verification code. Please check the code or request a new one.');
     }
     return true;
   }
@@ -239,23 +239,23 @@ async activateByToken(token: string) {
   console.log('Types:', typeof user?.resetPasswordCode, typeof dto.code);
 
   if (!user || user.resetPasswordCode !== dto.code) {
-    throw new UnauthorizedException('Code invalide');
+    throw new UnauthorizedException('Invalid reset code. Please check the code sent to your email.');
   }
 
-  console.log('Heure actuelle (serveur) :', new Date().toISOString());
-  console.log('Heure expiration en base :', user.resetPasswordExpires?.toISOString());
+  console.log('Current time (server):', new Date().toISOString());
+  console.log('Expiration time in DB:', user.resetPasswordExpires?.toISOString());
 
   if (new Date() > user.resetPasswordExpires!) {
-    throw new UnauthorizedException('Le code a expiré');
+    throw new UnauthorizedException('Reset code has expired. Please request a new one.');
   }
 
   // Si tout est bon, on peut retourner un jeton temporaire ou valider l'étape
-  return { message: 'Code valide', email: user.email };
+  return { message: 'Code is valid', email: user.email };
 }
 
   async requestPasswordReset(email: string) {
   const user = await this.userRepository.findOne({ where: { email } });
-  if (!user) throw new NotFoundException('user non trouvé');
+  if (!user) throw new NotFoundException('No account found with this email address.');
 
   // Générer un code aléatoire (ex: 6 chiffres)
   const code = Math.floor(100000 + Math.random() * 900000).toString();
@@ -274,7 +274,7 @@ async activateByToken(token: string) {
     const user = await this.userRepository.findOne({ where: { email } });
 
   if (!user || user.resetPasswordCode !== code || (user.resetPasswordExpires && new Date() > user.resetPasswordExpires)) {
-    throw new UnauthorizedException('Code invalide ou expiré');
+    throw new UnauthorizedException('Invalid or expired reset code. Cannot reset password.');
   } // Double vérification
 
     const hashedPassword = await bcrypt.hash(nouveauMotDePasse, 10);
@@ -292,7 +292,7 @@ async activateByToken(token: string) {
   // 1. On cherche l'user
   const user = await this.userRepository.findOne({ where: { email } });
   if (!user) {
-    throw new NotFoundException('user non trouvé');
+    throw new NotFoundException('No account found with this email address.');
   }
 
   // 2. On génère un nouveau code
@@ -311,7 +311,7 @@ async activateByToken(token: string) {
   // 5. On renvoie le mail
   await this.mailService.sendActivationCode(user.email, user.firstName, newCode);
   
-  return { message: 'Nouveau code envoyé avec succès' };
+  return { message: 'New verification code sent successfully to your email.' };
   }
 
   async changePassword(userId: string, changePasswordDto: ChangePasswordDto) {
@@ -326,7 +326,7 @@ async activateByToken(token: string) {
   });
 
   if (!user) {
-    throw new NotFoundException('user introuvable');
+    throw new NotFoundException('User account not found.');
   }
 
   // 2. Vérifier si l'ancien mot de passe est correct
@@ -336,7 +336,7 @@ async activateByToken(token: string) {
   );
 
   if (!isMatch) {
-    throw new BadRequestException('Mot de passe actuel incorrect');
+    throw new BadRequestException('Current password is incorrect. Please provide the correct password.')
   }
 
   // 3. Hasher le nouveau mot de passe
@@ -347,7 +347,7 @@ async activateByToken(token: string) {
   user.password = newHashedPassword;
   await this.userRepository.save(user);
 
-  return { message: 'Mot de passe mis à jour avec succès.' };
+  return { message: 'Password updated successfully.' };
   }
 
   // --- CRUD BASIQUE ---
@@ -360,7 +360,7 @@ async activateByToken(token: string) {
       where: { id },
     });
     if (!user) {
-      throw new NotFoundException(`user #${id} introuvable`);
+      throw new NotFoundException(`User #${id} not found.`);
     }
     return user;
   }
@@ -387,7 +387,7 @@ async activateByToken(token: string) {
 
     if (!user) {
       throw new NotFoundException(
-        `Aucun user trouvé avec l'identifiant : ${username}`,
+        `No user found with the identifier: ${username}`,
       );
     }
 

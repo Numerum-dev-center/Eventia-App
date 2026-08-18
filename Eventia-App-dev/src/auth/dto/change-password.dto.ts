@@ -6,12 +6,12 @@ export class ChangePasswordDto {
   ancienMotDePasse(oldPassword: any, newPassword: any) {
     throw new Error('Method not implemented.');
   }
-  @ApiProperty({ description: 'Ancien mot de passe requis pour la sécurité' })
+  @ApiProperty({ description: 'Current password required for security' })
   @IsNotEmpty()
   @IsString()
   oldPassword!: string;
 
-  @ApiProperty({ description: 'Nouveau mot de passe' })
+  @ApiProperty({ description: 'New password' })
   @IsNotEmpty()
   @IsString()
   @MinLength(8)

@@ -42,7 +42,7 @@ export class AuditLogService {
       relations: { user: true },
     });
     if (!log) {
-      throw new NotFoundException(`Log d'audit #${id} non trouvé`);
+      throw new NotFoundException(`Audit log #${id} not found`);
     }
     return log;
   }

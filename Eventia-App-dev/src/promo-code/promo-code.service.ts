@@ -45,19 +45,19 @@ export class PromoCodeService {
     });
 
     if (!promoCode || !promoCode.isActive) {
-      throw new NotFoundException('Code promo invalide ou inactif');
+      throw new NotFoundException('Invalid or inactive promo code. Please check the code and try again.');
     }
 
     if (promoCode.event && promoCode.event.id !== eventId) {
-      throw new BadRequestException("Ce code promo n'est pas applicable à cet événement");
+      throw new BadRequestException("This promo code is not applicable to this event");
     }
 
     const now = new Date();
     if (promoCode.validFrom && now < promoCode.validFrom) {
-      throw new BadRequestException("Ce code promo n'est pas encore actif");
+      throw new BadRequestException("This promo code is not yet active. It will be available from the validFrom date.");
     }
     if (promoCode.validUntil && now > promoCode.validUntil) {
-      throw new BadRequestException('Ce code promo a expiré');
+      throw new BadRequestException('This promo code has expired.');
     }
 
     if (promoCode.maxUses && promoCode.usedCount >= promoCode.maxUses) {

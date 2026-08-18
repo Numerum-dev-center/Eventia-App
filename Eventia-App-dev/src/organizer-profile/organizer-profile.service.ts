@@ -26,7 +26,7 @@ export class OrganizerProfileService {
       where: { user: { id: userId } },
     });
     if (existing) {
-      throw new ConflictException('Un profil organisateur existe déjà pour cet utilisateur');
+      throw new ConflictException('An organizer profile already exists for this user.');
     }
     try {
       const profile = this.organizerProfileRepository.create({
@@ -36,7 +36,7 @@ export class OrganizerProfileService {
       return await this.organizerProfileRepository.save(profile);
     } catch (error) {
       this.logger.error('Erreur lors de la création du profil organisateur', error);
-      throw new InternalServerErrorException('Erreur lors de la création du profil');
+      throw new InternalServerErrorException('Failed to create organizer profile. A profile may already exist for this user.');
     }
   }
 
@@ -64,7 +64,7 @@ export class OrganizerProfileService {
       relations: { event: true },
     });
     if (!profile) {
-      throw new NotFoundException(`Profil organisateur pour l'utilisateur #${userId} non trouvé`);
+      throw new NotFoundException(`Organizer profile for user #${userId} not found`);
     }
     return profile;
   }

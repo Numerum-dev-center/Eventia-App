@@ -72,10 +72,10 @@ export class AcessControlService {
       });
       const savedLog = await this.validationLogRepository.save(log);
 
-      return { success: true, message: 'Accès validé', log: savedLog };
+      return { success: true, message: 'Access granted', log: savedLog };
     } catch (error) {
-      this.logger.error('Erreur lors de la validation du ticket', error);
-      throw new InternalServerErrorException('Erreur lors de la validation');
+      this.logger.error('Error during ticket validation', error);
+      throw new InternalServerErrorException('Failed to validate ticket. Please try again.');
     }
   }
 

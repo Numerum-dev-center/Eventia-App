@@ -31,8 +31,8 @@ export class PaymentService {
       });
       return await this.paymentRepository.save(payment);
     } catch (error) {
-      this.logger.error('Erreur lors de la création du paiement', error);
-      throw new InternalServerErrorException('Erreur lors de la création du paiement');
+      this.logger.error('Failed to create payment. Please check the order ID and try again.', error);
+      throw new InternalServerErrorException('Failed to create payment. Please check the order ID and try again.');
     }
   }
 
@@ -108,10 +108,10 @@ export class PaymentService {
   async refund(id: string, reason?: string): Promise<Payment> {
     const payment = await this.findOne(id);
     if (payment.statut === PaymentStatut.REFUNDED) {
-      throw new BadRequestException('Ce paiement a déjà été remboursé');
+      throw new BadRequestException('This payment has already been refunded.');
     }
     if (payment.statut !== PaymentStatut.PAID) {
-      throw new BadRequestException('Seul un paiement payé peut être remboursé');
+      throw new BadRequestException('Only a paid payment can be refunded.');
     }
 
     payment.statut = PaymentStatut.REFUNDED;

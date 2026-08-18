@@ -31,13 +31,13 @@ import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse } from '@ne
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Roles(Role.ADMIN) // Seul un admin peut voir tous les utilisateurs
-  @Get('list')
+  @Roles(Role.ADMIN)
+  @Get()
   async findAll() {
     return await this.userService.findAll();
   }
 
-  @Get('details/:id')
+  @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.userService.findOne(id);
   }
@@ -50,11 +50,11 @@ export class UserController {
   return this.userService.changePassword(user.id, changePasswordDto);
 }
 
-  @Patch('me/profil-client')
+  @Patch('me/profile-client')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mettre à jour le profil client connecté' })
+  @ApiOperation({ summary: 'Update authenticated client profile' })
   @ApiBody({ type: BaseUpdateProfileDto })
-  @ApiResponse({ status: 200, description: 'Profil mis à jour.' })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
   async updateProfileClient(
     @GetUser() user: AuthenticatedUser, 
     @Body() updateClientDto: BaseUpdateProfileDto
@@ -62,12 +62,12 @@ export class UserController {
     return this.userService.update(user.id, updateClientDto);
   }
 
-  @Patch('me/profile-organisateur')
+  @Patch('me/profile-organizer')
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Mettre à jour le profil organisateur connecté' })
+  @ApiOperation({ summary: 'Update authenticated organizer profile' })
   @ApiBody({ type: UpdateOrganizerDto })
-  @ApiResponse({ status: 200, description: 'Profil organisateur mis à jour.' })
-  async updateProfileOrganisateur(
+  @ApiResponse({ status: 200, description: 'Organizer profile updated successfully.' })
+  async updateProfileOrganizer(
     @GetUser() user: AuthenticatedUser,
     @Body() updateOrganizerDto: UpdateOrganizerDto
   ) {
@@ -76,19 +76,19 @@ export class UserController {
   }
 
   @Roles(Role.ADMIN)
-  @Delete('delete/:id')
+  @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string) {
     return await this.userService.delete(id);
   }
 
   @Public()
-  @Post(':id/activer')
+  @Post(':id/activate')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Activer un compte utilisateur via code' })
-  @ApiParam({ name: 'id', description: 'ID de l\'utilisateur à activer' })
+  @ApiOperation({ summary: 'Activate user account via code' })
+  @ApiParam({ name: 'id', description: 'ID of the user to activate' })
   @ApiBody({ type: VerifyActivationDto })
-  @ApiResponse({ status: 200, description: 'Compte activé avec succès.' })
+  @ApiResponse({ status: 200, description: 'Account activated successfully.' })
   async activate(@Param('id') id: string, @Body() body: VerifyActivationDto) {
   return await this.userService.verifyActivation(id, body.code);
   }

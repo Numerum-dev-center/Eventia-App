@@ -5,19 +5,19 @@ import { IsStrongPassword } from 'src/auth/decorators/password-strength.decorato
 export class RegisterDto {
   @ApiProperty({ 
     example: 'jean@exemple.com', 
-    description: 'L\'email de l\'utilisateur pour se connecter' 
+    description: 'User email for login'
   })
-  @IsEmail({}, { message: 'Veuillez fournir un e-mail valide.' })
-  @IsNotEmpty({ message: "L'e-mail est requis." })
+  @IsEmail({}, { message: 'Please provide a valid email address.' })
+  @IsNotEmpty({ message: "Email is required." })
   email!: string;
 
   @ApiProperty({ 
     example: 'monSuperMotDePasse123', 
-    description: 'Le mot de passe (min 8 caractères, avec une majuscule, une minuscule, un chiffre, et un caractère spécial )' 
+    description: 'Password (min 8 chars, uppercase, lowercase, digit, special char)'
   })
-  @IsNotEmpty({ message: 'Le mot de passe est requis.' })
-  @MinLength(8, { message: 'Le mot de passe doit contenir au moins 8 caractères.' })
-  @IsStrongPassword({ message: 'Le mot de passe doit contenir au moins 1 minuscule, 1 majuscule, 1 chiffre et un caractère spécial.'})
+  @IsNotEmpty({ message: 'Password is required.' })
+  @MinLength(8, { message: 'Password must contain at least 8 characters.' })
+  @IsStrongPassword({ message: 'Password must contain at least 1 lowercase, 1 uppercase, 1 digit, and 1 special character.'})
   @ApiProperty({ example: 'Password123!' })
   password!: string;
 
@@ -25,5 +25,5 @@ export class RegisterDto {
   @IsString()
   @IsStrongPassword()
   @ApiProperty({ example: 'Password123!' })
-  confirmPassword!: string; // Pour valider côté client
+  confirmPassword!: string; // For client-side validation
 }
