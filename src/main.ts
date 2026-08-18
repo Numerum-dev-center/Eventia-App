@@ -12,11 +12,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  const corsOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim().replace(/\/$/, ''))
+    : ['https://eventia-beige.vercel.app', 'http://localhost:5173'];
+
   // 1. Configuration des Middlewares
   app.use(cookieParser());
   
   app.enableCors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : ['https://eventia-beige.vercel.app/'], 
+    origin: corsOrigins,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     allowedHeaders: 'Content-Type, Authorization',
