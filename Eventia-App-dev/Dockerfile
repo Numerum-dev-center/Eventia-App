@@ -1,5 +1,5 @@
 # Étape 1 : Construction (Build)
-FROM node:18-slim AS builder
+FROM node:22-slim AS builder
 RUN apt-get update && apt-get install -y python3 make g++ && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package*.json ./
@@ -9,7 +9,7 @@ COPY . .
 RUN npm run build
 
 # Étape 2 : Exécution (Production)
-FROM node:18-slim
+FROM node:22-slim
 WORKDIR /app
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
