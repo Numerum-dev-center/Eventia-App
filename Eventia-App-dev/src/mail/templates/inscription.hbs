@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Activation de compte - Eventia</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f7;
+      margin: 0;
+      padding: 0;
+      -webkit-text-size-adjust: none;
+      -webkit-font-smoothing: antialiased;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f7;
+      padding: 40px 0;
+    }
+    .email-content {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+    .email-header {
+      background-color: #4F46E5;
+      padding: 24px;
+      text-align: center;
+      color: #ffffff;
+      font-size: 24px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+    .email-body {
+      padding: 32px;
+      color: #333333;
+      line-height: 1.6;
+    }
+    .email-body h2 {
+      margin-top: 0;
+      color: #111827;
+    }
+    .button-container {
+      text-align: center;
+      margin: 32px 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 14px 28px;
+      background-color: #4F46E5;
+      color: #ffffff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      font-size: 16px;
+      box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3);
+    }
+    .link-fallback {
+      word-break: break-all;
+      font-size: 13px;
+      color: #4F46E5;
+      background-color: #f9fafb;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #e5e7eb;
+    }
+    .email-footer {
+      padding: 20px;
+      text-align: center;
+      font-size: 12px;
+      color: #9ca3af;
+      background-color: #fafafa;
+      border-top: 1px solid #eaeaea;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="email-content">
+      
+      <!-- En-tête avec la marque -->
+      <div class="email-header">
+        Eventia
+      </div>
+
+      <!-- Corps du message -->
+      <div class="email-body">
+        <h2>Bienvenue ! 👋</h2>
+        <p>Merci de vous être inscrit sur <strong>Eventia</strong>. Pour activer votre compte et commencer à réserver vos billets en toute tranquillité, veuillez cliquer sur le bouton ci-dessous :</p>
+        
+        <div class="button-container">
+          <a href="{{activationLink}}" class="btn" target="_blank">Activer mon compte</a>
+        </div>
+
+        <p>Si le bouton ne fonctionne pas, vous pouvez copier et coller le lien ci-dessous dans votre navigateur web :</p>
+        <div class="link-fallback">
+          <a href="{{activationLink}}" style="color: #4F46E5; text-decoration: none;">{{activationLink}}</a>
+        </div>
+
+        <p style="margin-top: 30px; font-size: 14px; color: #6b7280;">
+          Si vous n'êtes pas à l'origine de cette inscription, vous pouvez ignorer cet e-mail en toute sécurité. Ce lien est valide pendant 24 heures.
+        </p>
+      </div>
+
+      <!-- Pied de page -->
+      <div class="email-footer">
+        <p>&copy; 2026 Eventia. Tous droits réservés.</p>
+      </div>
+
+    </div>
+  </div>
+</body>
+</html>
