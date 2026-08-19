@@ -31,7 +31,7 @@ import { ConfigService } from '@nestjs/config';
 export class AuthController {
   constructor(
     private readonly authService: AuthService, 
-    private readonly utilisateurService: UserService,
+    private readonly userService: UserService,
     private readonly configService: ConfigService
   ) {}
 
@@ -119,7 +119,7 @@ export class AuthController {
   @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string', example: 'user@example.com' } } } })
   @ApiResponse({ status: 200, description: 'Email sent successfully.' })
   async forgotPassword(@Body('email') email: string) {
-    return await this.utilisateurService.forgotPassword(email);
+    return await this.userService.forgotPassword(email);
   }
 
   @Public()
@@ -129,7 +129,7 @@ export class AuthController {
   @ApiBody({ schema: { type: 'object', properties: { email: { type: 'string', example: 'user@example.com' } } } })
   @ApiResponse({ status: 200, description: 'Code resent successfully.' })
   async resendCode(@Body('email') email: string) {
-    return await this.utilisateurService.resendCode(email);
+    return await this.userService.resendCode(email);
   }
 
   @Public()
@@ -142,7 +142,7 @@ export class AuthController {
   if (resetPasswordDto.newPassword !== resetPasswordDto.confirmPassword) {
     throw new BadRequestException('Les mots de passe ne correspondent pas');
   }
-  return await this.utilisateurService.resetPassword(
+  return await this.userService.resetPassword(
     resetPasswordDto.email, 
     resetPasswordDto.code, 
     resetPasswordDto.newPassword

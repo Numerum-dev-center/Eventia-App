@@ -22,7 +22,7 @@ class OrganizerProfileDetailsDto {
 
   @IsString()
   @IsOptional()
-  @ApiPropertyOptional({ description: "Document URL or path", example: 'justificatif_kbis.pdf' })
+  @ApiPropertyOptional({ description: "Document URL or path", example: 'business_registration.pdf' })
   officialFiles?: string;
 }
 

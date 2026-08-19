@@ -246,6 +246,6 @@ export class YeriaController {
       body.body,
       body.link,
     );
-    return { message: 'Notification envoyée avec succès' };
+    return { message: 'Notification sent successfully' };
   }
 }

@@ -30,7 +30,7 @@ export class BaseUpdateProfileDto {
   @IsOptional()
   @IsString()
   @ApiProperty({ 
-    example: 'Rue des évalas, 456', 
+    example: '123 Main Street, Lome', 
     description: 'User home address'
   })
   homeAdress?: string;
@@ -38,7 +38,7 @@ export class BaseUpdateProfileDto {
   @IsOptional()
   @IsEnum(Sex)
   @ApiProperty({ 
-    example: 'Masculin', 
+    example: 'Male', 
     description: 'User gender. Enter Male or Female. Please follow this exact format.'
   })
   sex?: Sex;

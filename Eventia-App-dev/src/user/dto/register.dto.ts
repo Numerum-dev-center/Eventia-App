@@ -4,7 +4,7 @@ import { IsStrongPassword } from 'src/auth/decorators/password-strength.decorato
 
 export class RegisterDto {
   @ApiProperty({ 
-    example: 'jean@exemple.com', 
+    example: 'john@example.com', 
     description: 'User email for login'
   })
   @IsEmail({}, { message: 'Please provide a valid email address.' })
@@ -12,7 +12,7 @@ export class RegisterDto {
   email!: string;
 
   @ApiProperty({ 
-    example: 'monSuperMotDePasse123', 
+    example: 'MySecurePass123!', 
     description: 'Password (min 8 chars, uppercase, lowercase, digit, special char)'
   })
   @IsNotEmpty({ message: 'Password is required.' })
