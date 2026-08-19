@@ -1,13 +1,5 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  UseGuards,
-} from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { AcessControlService } from './acess-control.service';
 import { CreateAcessControlDto, UpdateAcessControlDto } from './dto/create-acess-control.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -15,6 +7,7 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Role } from 'src/common/role.enum';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 
+@ApiTags('AccessControl')
 @Controller('access-control')
 export class AcessControlController {
   constructor(private readonly acessControlService: AcessControlService) {}
