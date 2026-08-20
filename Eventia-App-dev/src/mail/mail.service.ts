@@ -15,7 +15,7 @@ export class MailService {
     async sendActivationCode(email: string, nom: string, code: string) {
     await this.mailerService.sendMail({
         to: email,
-        subject: 'Votre code d\'activation Eventia',
+        subject: 'Your Eventia verification code',
         template: './activation', 
         context: {
         nom: nom,
@@ -27,44 +27,24 @@ export class MailService {
     async sendCodeResetEmail(email: string, code: string) {
         await this.mailerService.sendMail({
         to: email,
-        subject: 'Réinitialisation de votre mot de passe',
-        template: './password-reset', // ton fichier password-reset.hbs
-        context: { code }, // passe le code au template
+        subject: 'Password reset request',
+        template: './password-reset',
+        context: { code },
         });
     }
 
   async sendActivationEmail(email: string, activationLink: string): Promise<void> {
     try {
-      const apiKey = this.configService.get<string>('BREVO_API_KEY');
-      const senderEmail = this.configService.get<string>('MAIL_FROM') || 'no-reply@eventia.com';
-
-      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-        method: 'POST',
-        headers: {
-          'accept': 'application/json',
-          'api-key': apiKey || '',
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          sender: { 
-            name: 'Eventia', 
-            email: senderEmail 
-          },
-          to: [{ email }],
-          subject: 'Activez votre compte Eventia',
-          htmlContent: `<p>Bonjour, veuillez cliquer sur le lien suivant pour activer votre compte : <a href="${activationLink}">Activer mon compte</a></p>`,
-        }),
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Activate your Eventia account',
+        html: `<p>Hello, please click the following link to activate your account: <a href="${activationLink}">Activate my account</a></p>`,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Brevo API error: ${JSON.stringify(errorData)}`);
-      }
-
-      this.logger.log(`E-mail d'activation envoyé avec succès à ${email}`);
+      this.logger.log(`Activation email sent successfully to ${email}`);
     } catch (error) {
-      this.logger.error(`Erreur lors de l'envoi de l'e-mail à ${email}:`, error);
-      throw new InternalServerErrorException("Impossible d'envoyer l'e-mail d'activation");
+      this.logger.error(`Failed to send activation email to ${email}:`, error);
+      throw new InternalServerErrorException("Unable to send activation email");
     }
   }
     
