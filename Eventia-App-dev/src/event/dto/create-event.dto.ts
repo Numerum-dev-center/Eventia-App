@@ -8,6 +8,7 @@ import {
   MaxLength,
   Matches,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { EventCategory } from 'src/common/event-category.enum';
 
@@ -51,11 +52,13 @@ export class CreateEventDto {
   category!: EventCategory;
 
   @ApiProperty({ example: 5000, description: 'Number of available seats' })
+  @Type(() => Number)
   @IsNumber({}, { message: 'Capacity must be a number.' })
   @Min(1, { message: 'Capacity must be at least 1.' })
   capacity!: number;
 
   @ApiProperty({ example: 5000, description: 'Ticket price in FCFA/XOF (0 for free events)' })
+  @Type(() => Number)
   @IsNumber({}, { message: 'Ticket price must be a number.' })
   @Min(0, { message: 'Ticket price cannot be negative.' })
   ticketPrice!: number;

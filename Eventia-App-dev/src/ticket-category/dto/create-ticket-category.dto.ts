@@ -24,6 +24,7 @@ export class CreateTicketCategoryDto {
   @Min(1)
   limitByPerson?: number;
 
-  @IsNotEmpty()
-  eventId!: string;
+  @IsOptional()
+  @IsString()
+  eventId?: string;
 }
