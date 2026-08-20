@@ -1,4 +1,3 @@
-import { MailerService } from '@nestjs-modules/mailer';
 import {
   Controller,
   Get,
@@ -24,10 +23,11 @@ import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interf
 import { BaseUpdateProfileDto } from './dto/base-update-profile.dto';
 import { UpdateOrganizerDto } from './dto/update-organizer.dto';
 import { ChangePasswordDto } from 'src/auth/dto/change-password.dto';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('User')
 @Controller('user')
-@UseGuards(JwtAuthGuard, RolesGuard) // Protection par défaut pour toutes les routes
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -37,6 +37,17 @@ export class UserController {
     return await this.userService.findAll();
   }
 
+  @Roles(Role.ADMIN)
+  @Get('liste')
+  async findAllAlias() {
+    return await this.userService.findAll();
+  }
+
+  @Get('details/:id')
+  async findDetails(@Param('id') id: string) {
+    return await this.userService.findOne(id);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.userService.findOne(id);
@@ -44,39 +55,38 @@ export class UserController {
 
   @Patch('me/change-password')
   async changePassword(
-  @GetUser() user: AuthenticatedUser,
-  @Body() changePasswordDto: ChangePasswordDto
-) {
-  return this.userService.changePassword(user.id, changePasswordDto);
-}
+    @GetUser() user: AuthenticatedUser,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.userService.changePassword(user.id, changePasswordDto);
+  }
 
-  @Patch('me/profile-client')
+  @Patch('me/profil-client')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update authenticated client profile' })
   @ApiBody({ type: BaseUpdateProfileDto })
   @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
   async updateProfileClient(
-    @GetUser() user: AuthenticatedUser, 
-    @Body() updateClientDto: BaseUpdateProfileDto
+    @GetUser() user: AuthenticatedUser,
+    @Body() updateClientDto: BaseUpdateProfileDto,
   ) {
     return this.userService.update(user.id, updateClientDto);
   }
 
-  @Patch('me/profile-organizer')
+  @Patch('me/profil-organisateur')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update authenticated organizer profile' })
   @ApiBody({ type: UpdateOrganizerDto })
   @ApiResponse({ status: 200, description: 'Organizer profile updated successfully.' })
   async updateProfileOrganizer(
     @GetUser() user: AuthenticatedUser,
-    @Body() updateOrganizerDto: UpdateOrganizerDto
+    @Body() updateOrganizerDto: UpdateOrganizerDto,
   ) {
-    // Ici, le service saura qu'il doit aussi mettre à jour la table profil_organisateurs
     return this.userService.updateOrganizer(user.id, updateOrganizerDto);
   }
 
   @Roles(Role.ADMIN)
-  @Delete(':id')
+  @Delete('delete/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string) {
     return await this.userService.delete(id);
@@ -90,13 +100,12 @@ export class UserController {
   @ApiBody({ type: VerifyActivationDto })
   @ApiResponse({ status: 200, description: 'Account activated successfully.' })
   async activate(@Param('id') id: string, @Body() body: VerifyActivationDto) {
-  return await this.userService.verifyActivation(id, body.code);
+    return await this.userService.verifyActivation(id, body.code);
   }
 
   @Public()
   @Post('verify-reset-code')
   async verifyResetCode(@Body() dto: VerifyResetCodeDto) {
-    // Vérifie si le code est correct et non expiré
     return await this.userService.verifyPasswordResetCode(dto);
   }
 }

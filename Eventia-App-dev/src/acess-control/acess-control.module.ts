@@ -9,5 +9,6 @@ import { Ticket } from 'src/tickets/entities/ticket.entity';
   imports: [TypeOrmModule.forFeature([ValidationTicketLog, Ticket])],
   controllers: [AcessControlController],
   providers: [AcessControlService],
+  exports: [AcessControlService],
 })
 export class AcessControlModule {}

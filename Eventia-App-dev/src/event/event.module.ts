@@ -13,5 +13,6 @@ import { EventMedia } from 'src/media/entities/event-media.entity';
   ],
   controllers: [EventController],
   providers: [EventService],
+  exports: [EventService],
 })
 export class EventModule {}

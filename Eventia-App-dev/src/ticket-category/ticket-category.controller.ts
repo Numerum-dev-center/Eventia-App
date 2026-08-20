@@ -37,8 +37,13 @@ export class TicketCategoryController {
     return this.ticketCategoryService.findByEvent(eventId);
   }
 
-  @Get(':id')
+  @Get('categorie-ticket/:id')
   findOne(@Param('id') id: string) {
+    return this.ticketCategoryService.findOne(id);
+  }
+
+  @Get(':id')
+  findOneByParam(@Param('id') id: string) {
     return this.ticketCategoryService.findOne(id);
   }
 

@@ -13,5 +13,6 @@ import { TicketCategory } from 'src/ticket-category/entities/ticket-category.ent
   imports: [TypeOrmModule.forFeature([Event, Ticket, Order, Payment, User, TicketCategory])],
   controllers: [DashboardController],
   providers: [DashboardService],
+  exports: [DashboardService],
 })
 export class DashboardModule {}

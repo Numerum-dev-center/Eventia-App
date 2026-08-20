@@ -445,4 +445,14 @@ async activateByToken(token: string) {
     const user = await this.findOne(id);
     await this.userRepository.remove(user);
   }
+
+  async findOrganizerProfileId(userId: string): Promise<string> {
+    const profile = await this.profilOrgRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!profile) {
+      throw new NotFoundException('No organizer profile found for this user.');
+    }
+    return profile.id;
+  }
 }

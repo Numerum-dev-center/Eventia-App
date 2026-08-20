@@ -26,6 +26,7 @@ import { MediaModule } from './media/media.module';
 import { CommissionModule } from './commission/commission.module';
 import { EventCategoryModule } from './event-category/event-category.module';
 import { PromoCodeModule } from './promo-code/promo-code.module';
+import { OrganizerModule } from './organizer/organizer.module';
 
 
 
@@ -54,6 +55,7 @@ import { PromoCodeModule } from './promo-code/promo-code.module';
     CommissionModule,
     EventCategoryModule,
     PromoCodeModule,
+    OrganizerModule,
     TypeOrmModule.forRootAsync({
       
       imports: [ConfigModule],
