@@ -66,7 +66,7 @@ import { OrganizerModule } from './organizer/organizer.module';
           type: 'postgres',
           url: config.get<string>('DATABASE_URL'), // C'est ici que tu mets l'URL d'Aiven
           autoLoadEntities: true,
-          synchronize: true, // À passer à 'false' en production !
+          synchronize: config.get<string>('NODE_ENV') !== 'production',
           ssl: useSsl ? { rejectUnauthorized: false } : false,
           logging: true,
           subscribers: [AuditSubscriber],
