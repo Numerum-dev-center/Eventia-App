@@ -18,9 +18,7 @@ async function bootstrap() {
   app.use(cookieParser());
   
   app.enableCors({
-    origin: process.env.CORS_ORIGIN
-      ? process.env.CORS_ORIGIN.split(',')
-      : ['https://eventia-beige.vercel.app', 'http://localhost:5173', 'http://localhost:3000'],
+    origin: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     allowedHeaders: 'Content-Type, Authorization',
