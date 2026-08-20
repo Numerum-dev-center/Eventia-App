@@ -122,8 +122,12 @@ async requestActivationToken(userId: string) {
   const backendUrl = this.configService.get<string>('BACKEND_URL');
   const activationLink = `${backendUrl}/auth/activate?token=${token}`;
 
-  // Envoyer l'e-mail avec le lien
-  await this.mailService.sendActivationEmail(user.email, activationLink);
+  // Envoyer l'e-mail avec le lien (non bloquant si Brevo non configuré)
+  try {
+    await this.mailService.sendActivationEmail(user.email, activationLink);
+  } catch (error) {
+    this.logger.warn(`Could not send activation email to ${user.email}: ${error.message}. Token: ${token}`);
+  }
 }
 
 // --- VALIDATION DU COMPTE VIA LE TOKEN ---
@@ -181,8 +185,12 @@ async activateByToken(token: string) {
     dateExpirationCode: expiration,
   });
 
-    // 3. Appel du service mail
-    await this.mailService.sendActivationCode(user.email, user.lastName, code);
+    // 3. Appel du service mail (non bloquant)
+    try {
+      await this.mailService.sendActivationCode(user.email, user.lastName, code);
+    } catch (error) {
+      this.logger.warn(`Could not send activation code to ${user.email}: ${error.message}`);
+    }
   }
 
   // --- ACTIVATION ---
@@ -212,7 +220,11 @@ async activateByToken(token: string) {
     expiration.setMinutes(expiration.getMinutes() + 15); // Code valide 15 min
 
     await this.userRepository.update(user.id, { resetPasswordCode: code, resetPasswordExpires: expiration });
-    await this.mailService.sendCodeResetEmail(user.email, code);
+    try {
+      await this.mailService.sendCodeResetEmail(user.email, code);
+    } catch (error) {
+      this.logger.warn(`Could not send reset code to ${user.email}: ${error.message}`);
+    }
   }
 
   // ÉTAPE 2 : Vérification du code
@@ -265,8 +277,12 @@ async activateByToken(token: string) {
   user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min
   await this.userRepository.save(user);
 
-  // Envoyer le mail
-  await this.mailService.sendCodeResetEmail(user.email, code);
+  // Envoyer le mail (non bloquant)
+  try {
+    await this.mailService.sendCodeResetEmail(user.email, code);
+  } catch (error) {
+    this.logger.warn(`Could not send reset email to ${user.email}: ${error.message}`);
+  }
 }
 
   // ÉTAPE 3 : Création du nouveau mot de passe
@@ -308,8 +324,12 @@ async activateByToken(token: string) {
     dateExpirationCode: expiration,
   });
 
-  // 5. On renvoie le mail
-  await this.mailService.sendActivationCode(user.email, user.firstName, newCode);
+  // 5. On renvoie le mail (non bloquant)
+  try {
+    await this.mailService.sendActivationCode(user.email, user.firstName, newCode);
+  } catch (error) {
+    this.logger.warn(`Could not resend activation code to ${user.email}: ${error.message}`);
+  }
   
   return { message: 'New verification code sent successfully to your email.' };
   }
