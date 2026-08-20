@@ -1,6 +1,5 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
   Column,
   ManyToOne,
   OneToMany,
@@ -9,7 +8,7 @@ import {
 
 import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
 import { EventStatut } from 'src/common/event-statut.enum';
-import { LocationType } from 'src/common/location-type.enum';
+import { EventCategory } from 'src/common/event-category.enum';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { BaseEntity } from 'src/common/entities/base.entity';
 import { EventMedia } from 'src/media/entities/event-media.entity';
@@ -23,8 +22,14 @@ export class Event extends BaseEntity {
   @Column({ type: 'text' })
   description!: string;
 
-  @Column()
-  category!: string;
+  @Column({ type: 'enum', enum: EventCategory })
+  category!: EventCategory;
+
+  @Column({ nullable: true })
+  location?: string;
+
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+  ticketPrice!: number;
 
   @Column({ nullable: true })
   placeName?: string;
@@ -47,16 +52,6 @@ export class Event extends BaseEntity {
   @Column({ nullable: true })
   bannerImage?: string;
 
-  @Column({
-    type: 'enum',
-    enum: LocationType,
-    default: LocationType.PHYSICAL,
-  })
-  locationType!: LocationType;
-
-  @Column({ nullable: true })
-  onlineUrl?: string;
-
   @Column({ nullable: true })
   maxCapacity?: number;
 
@@ -67,16 +62,13 @@ export class Event extends BaseEntity {
   })
   statut!: EventStatut;
 
-  // Relation : un organisateur (Utilisateur) peut créer plusieurs événements
-  @ManyToOne(() => OrganizerProfile, (profil) => profil.event)
-  @JoinColumn({ name: 'organizer_profile_id' }) // La clé étrangère est ici !
+  @ManyToOne(() => OrganizerProfile, (profile) => profile.event)
+  @JoinColumn({ name: 'organizer_profile_id' })
   organizerProfile!: OrganizerProfile;
 
-  // Relation : un événement contient plusieurs catégories de tickets
   @OneToMany(() => TicketCategory, (category) => category.event)
   ticketsCategories!: TicketCategory[];
 
-  // Relation : un événement contient plusieurs médias
   @OneToMany(() => EventMedia, (media) => media.event)
   media?: EventMedia[];
 }

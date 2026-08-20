@@ -32,54 +32,57 @@ export class EventService {
   async create(
     createEventDto: CreateEventDto,
     userId: string,
+    coverImageFile?: Express.Multer.File,
   ): Promise<Event> {
     try {
       const profile = await this.organizerProfileRepository.findOne({
         where: { user: { id: userId } },
       });
       if (!profile) {
-        throw new BadRequestException("Aucun profil organisateur trouvé pour cet utilisateur.");
+        throw new BadRequestException(
+          'No organizer profile found for this user. Please create your organizer profile first.',
+        );
       }
+
+      const { date, startTime, endTime, capacity, ticketPrice, ...rest } = createEventDto;
+
+      const startDate = this.combineDateAndTime(date, startTime);
+      const endDate = this.combineDateAndTime(date, endTime);
+
+      if (endDate <= startDate) {
+        throw new BadRequestException(
+          'End time must be after start time. If the event ends the next day, the backend will still accept it as long as the start time is before the end time.',
+        );
+      }
+
+      const bannerImage = coverImageFile
+        ? `/uploads/${coverImageFile.filename}`
+        : undefined;
 
       const event = this.eventRepository.create({
-        title: createEventDto.title,
-        description: createEventDto.description,
-        category: createEventDto.category,
-        placeName: createEventDto.placeName,
-        adress: createEventDto.adress,
-        longitude: createEventDto.longitude,
-        latitude: createEventDto.latitude,
-        locationType: createEventDto.locationType,
-        onlineUrl: createEventDto.onlineUrl,
-        maxCapacity: createEventDto.maxCapacity,
-        startDate: createEventDto.startDate,
-        endDate: createEventDto.endDate,
-        bannerImage: createEventDto.bannerImage,
+        title: rest.title?.trim(),
+        description: rest.description?.trim(),
+        category: rest.category,
+        location: rest.location?.trim(),
+        placeName: rest.location?.trim(),
+        ticketPrice: ticketPrice,
+        startDate,
+        endDate,
+        bannerImage,
+        maxCapacity: capacity,
         organizerProfile: { id: profile.id },
       });
-      const savedEvent = await this.eventRepository.save(event);
 
-      if (createEventDto.ticketsCategories?.length) {
-        const categories = createEventDto.ticketsCategories.map((tc) =>
-          this.ticketCategoryRepository.create({
-            name: tc.name,
-            price: Number(tc.price),
-            totalQuantity: tc.totalQuantity,
-            availableQuantity: tc.totalQuantity,
-            limitByPerson: tc.limitByPerson,
-            event: { id: savedEvent.id },
-          }),
-        );
-        await this.ticketCategoryRepository.save(categories);
-      }
-
-      return this.findOne(savedEvent.id);
+      return await this.eventRepository.save(event);
     } catch (error) {
-      if (error instanceof BadRequestException) throw error;
-      this.logger.error("Erreur lors de la création de l'événement", error);
-      throw new InternalServerErrorException(
-        "Erreur lors de la création de l'événement",
-      );
+      if (
+        error instanceof BadRequestException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
+      this.logger.error('Failed to create event', error);
+      throw new InternalServerErrorException('Failed to create event. Please try again.');
     }
   }
 
@@ -101,10 +104,10 @@ export class EventService {
   async findOne(id: string): Promise<Event> {
     const event = await this.eventRepository.findOne({
       where: { id },
-      relations: { organizerProfile: true, ticketsCategories: true },
+      relations: { organizerProfile: true, ticketsCategories: true, media: true },
     });
     if (!event) {
-      throw new NotFoundException(`Événement #${id} non trouvé`);
+      throw new NotFoundException(`Event #${id} not found.`);
     }
     return event;
   }
@@ -117,21 +120,63 @@ export class EventService {
     });
   }
 
+  async findMyEvents(userId: string): Promise<Event[]> {
+    const profile = await this.organizerProfileRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!profile) {
+      throw new NotFoundException('No organizer profile found for this user.');
+    }
+    return await this.findByOrganizer(profile.id);
+  }
+
   async update(
     id: string,
     updateEventDto: UpdateEventDto,
     userId: string,
     userRole: string,
+    coverImageFile?: Express.Multer.File,
   ): Promise<Event> {
     const event = await this.findOne(id);
 
-    if (userRole !== Role.ADMIN && event.organizerProfile?.user?.id !== userId) {
-      throw new ForbiddenException(
-        "Vous n'êtes pas autorisé à modifier cet événement",
-      );
+    if (userRole !== Role.ADMIN) {
+      const profile = await this.organizerProfileRepository.findOne({
+        where: { user: { id: userId } },
+      });
+      if (!profile || event.organizerProfile?.id !== profile.id) {
+        throw new ForbiddenException(
+          'You are not authorized to update this event.',
+        );
+      }
     }
 
-    Object.assign(event, updateEventDto);
+    const { date, startTime, endTime, capacity, ticketPrice, ...rest } = updateEventDto;
+
+    if (date && startTime) {
+      event.startDate = this.combineDateAndTime(date, startTime);
+    }
+    if (date && endTime) {
+      event.endDate = this.combineDateAndTime(date, endTime);
+    }
+
+    if (event.endDate && event.startDate && event.endDate <= event.startDate) {
+      throw new BadRequestException('End time must be after start time.');
+    }
+
+    if (coverImageFile) {
+      event.bannerImage = `/uploads/${coverImageFile.filename}`;
+    }
+
+    if (rest.title !== undefined) event.title = rest.title?.trim();
+    if (rest.description !== undefined) event.description = rest.description?.trim();
+    if (rest.category !== undefined) event.category = rest.category;
+    if (rest.location !== undefined) {
+      event.location = rest.location?.trim();
+      event.placeName = rest.location?.trim();
+    }
+    if (ticketPrice !== undefined) event.ticketPrice = ticketPrice;
+    if (capacity !== undefined) event.maxCapacity = capacity;
+
     return await this.eventRepository.save(event);
   }
 
@@ -154,13 +199,13 @@ export class EventService {
     const allowed = allowedTransitions[event.statut] || [];
     if (!allowed.includes(statut)) {
       throw new BadRequestException(
-        `Transition de ${event.statut} vers ${statut} non autorisée`,
+        `Transition from ${event.statut} to ${statut} is not allowed.`,
       );
     }
 
     if (statut === EventStatut.PUBLISHED && !event.startDate) {
       throw new BadRequestException(
-        "La date de début est requise pour publier",
+        'Start date is required before publishing.',
       );
     }
 
@@ -168,8 +213,20 @@ export class EventService {
     return await this.eventRepository.save(event);
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userId?: string, userRole?: string): Promise<void> {
     const event = await this.findOne(id);
+
+    if (userRole !== Role.ADMIN && userId) {
+      const profile = await this.organizerProfileRepository.findOne({
+        where: { user: { id: userId } },
+      });
+      if (!profile || event.organizerProfile?.id !== profile.id) {
+        throw new ForbiddenException(
+          'You are not authorized to delete this event.',
+        );
+      }
+    }
+
     await this.eventRepository.remove(event);
   }
 
@@ -177,5 +234,9 @@ export class EventService {
     return await this.eventRepository.count({
       where: { organizerProfile: { id: organizerId } },
     });
+  }
+
+  private combineDateAndTime(date: string, time: string): Date {
+    return new Date(`${date}T${time}:00.000Z`);
   }
 }

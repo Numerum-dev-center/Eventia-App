@@ -7,7 +7,16 @@ import {
   Param,
   Delete,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  ParseFilePipe,
+  FileTypeValidator,
+  MaxFileSizeValidator,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EventService } from './event.service';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
@@ -18,19 +27,77 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interface';
+import { BadRequestException } from '@nestjs/common';
 
-@Controller('event')
+const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png'];
+
+@ApiTags('Events')
+@Controller('events')
 export class EventController {
   constructor(private readonly eventService: EventService) {}
 
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER)
+  @ApiBearerAuth()
+  @UseInterceptors(
+    FileInterceptor('coverImage', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (_req, file, cb) => {
+          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
+          cb(null, uniqueName);
+        },
+      }),
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException('Only JPG and PNG images are allowed.'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  @ApiOperation({ summary: 'Create a new event (multipart/form-data with optional coverImage)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({ schema: {
+    type: 'object',
+    required: ['title', 'date', 'startTime', 'endTime', 'location', 'category', 'capacity', 'ticketPrice', 'description'],
+    properties: {
+      coverImage: { type: 'string', format: 'binary', description: 'Cover image (JPG/PNG, max 5MB)' },
+      title: { type: 'string', example: 'Festival Afrobeat Lome 2026' },
+      description: { type: 'string', example: 'The biggest afrobeat music festival' },
+      date: { type: 'string', example: '2026-12-20' },
+      startTime: { type: 'string', example: '20:00' },
+      endTime: { type: 'string', example: '04:00' },
+      location: { type: 'string', example: 'Stade de Keque, Lome' },
+      category: { type: 'string', enum: ['Concert','Conference','Spectacle','Marche','Sport','Autre'] },
+      capacity: { type: 'number', example: 5000 },
+      ticketPrice: { type: 'number', example: 5000 },
+    },
+  }})
+  @ApiResponse({ status: 201, description: 'Event created successfully.' })
+  @ApiResponse({ status: 400, description: 'Validation error.' })
+  @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async create(
-    @Body() createEventDto: CreateEventDto,
     @GetUser() user: AuthenticatedUser,
+    @Body() createEventDto: CreateEventDto,
+    @UploadedFile() coverImage?: Express.Multer.File,
   ) {
-    return this.eventService.create(createEventDto, user.id);
+    return this.eventService.create(createEventDto, user.id, coverImage);
+  }
+
+  @Get('my-events')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ORGANIZER)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all events for the authenticated organizer' })
+  @ApiResponse({ status: 200, description: 'List of organizer events.' })
+  async findMyEvents(@GetUser() user: AuthenticatedUser) {
+    return this.eventService.findMyEvents(user.id);
   }
 
   @Get()
@@ -44,31 +111,60 @@ export class EventController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  @ApiOperation({ summary: 'Get event details by ID' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  @ApiResponse({ status: 200, description: 'Event details.' })
+  @ApiResponse({ status: 404, description: 'Event not found.' })
+  async findOne(@Param('id') id: string) {
     return this.eventService.findOne(id);
-  }
-
-  @Get('organizer/:organizerId')
-  @UseGuards(JwtAuthGuard)
-  findByOrganizer(@Param('organizerId') organizerId: string) {
-    return this.eventService.findByOrganizer(organizerId);
   }
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER, Role.ADMIN)
-  update(
+  @ApiBearerAuth()
+  @UseInterceptors(
+    FileInterceptor('coverImage', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (_req, file, cb) => {
+          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
+          cb(null, uniqueName);
+        },
+      }),
+      limits: { fileSize: 5 * 1024 * 1024 },
+      fileFilter: (_req, file, cb) => {
+        if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
+          return cb(
+            new BadRequestException('Only JPG and PNG images are allowed.'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  @ApiOperation({ summary: 'Update an event (owner or admin only)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  @ApiResponse({ status: 200, description: 'Event updated.' })
+  @ApiResponse({ status: 403, description: 'Not authorized to update this event.' })
+  async update(
     @Param('id') id: string,
-    @Body() updateEventDto: UpdateEventDto,
     @GetUser() user: AuthenticatedUser,
+    @Body() updateEventDto: UpdateEventDto,
+    @UploadedFile() coverImage?: Express.Multer.File,
   ) {
-    return this.eventService.update(id, updateEventDto, user.id, user.role);
+    return this.eventService.update(id, updateEventDto, user.id, user.role, coverImage);
   }
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER, Role.ADMIN)
-  updateStatut(
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update event status' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  async updateStatut(
     @Param('id') id: string,
     @Body('status') statut: EventStatut,
   ) {
@@ -78,7 +174,15 @@ export class EventController {
   @Delete(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER, Role.ADMIN)
-  remove(@Param('id') id: string) {
-    return this.eventService.remove(id);
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete an event (owner or admin only)' })
+  @ApiParam({ name: 'id', description: 'Event UUID' })
+  @ApiResponse({ status: 204, description: 'Event deleted.' })
+  @ApiResponse({ status: 403, description: 'Not authorized to delete this event.' })
+  async remove(
+    @Param('id') id: string,
+    @GetUser() user: AuthenticatedUser,
+  ) {
+    return this.eventService.remove(id, user.id, user.role);
   }
 }
