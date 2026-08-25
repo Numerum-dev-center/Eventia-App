@@ -415,21 +415,27 @@ async activateByToken(token: string) {
   }
 
   async updateOrganizer(userId: string, dto: UpdateOrganizerDto) {
-  const { organizerProfile, ...userInfos } = dto;
-  
-  // 1. Update les infos user (nom, tel...)
-  await this.userRepository.update(userId, userInfos);
-  
-  // 2. Update les infos profilOrganisateur
-  if (organizerProfile) {
-     await this.profilOrgRepository
-      .createQueryBuilder()
-      .update(organizerProfile)
-      .set(organizerProfile) // Tes nouvelles données
-      .where("user_id = :id", { id: userId }) // Ici on cible la colonne SQL
-      .execute();
+    const { organizerProfile, ...userInfos } = dto;
+
+    if (Object.keys(userInfos).length > 0) {
+      await this.userRepository.update(userId, userInfos);
+    }
+
+    if (organizerProfile) {
+      await this.profilOrgRepository
+        .createQueryBuilder()
+        .update(OrganizerProfile)
+        .set(organizerProfile)
+        .where("user_id = :id", { id: userId })
+        .execute();
+    }
+
+    const updatedUser = await this.userRepository.findOne({
+      where: { id: userId },
+      relations: { organizerProfile: true },
+    });
+    return updatedUser;
   }
-}
 
   async update(
     id: string,
