@@ -9,13 +9,10 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
-  ParseFilePipe,
-  FileTypeValidator,
-  MaxFileSizeValidator,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EventService } from './event.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -27,9 +24,30 @@ import { RolesGuard } from 'src/auth/roles.guard';
 import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interface';
-import { BadRequestException } from '@nestjs/common';
 
-const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png'];
+const ALLOWED_IMAGE_MIMES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+];
+
+const coverImageInterceptor = UseInterceptors(
+  FileInterceptor('coverImage', {
+    storage: memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
+        return cb(
+          new BadRequestException('Only JPG, PNG, WebP, GIF and SVG images are allowed.'),
+          false,
+        );
+      }
+      cb(null, true);
+    },
+  }),
+);
 
 @ApiTags('Events')
 @Controller('events')
@@ -40,34 +58,14 @@ export class EventController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER)
   @ApiBearerAuth()
-  @UseInterceptors(
-    FileInterceptor('coverImage', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) => {
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) => {
-        if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
-          return cb(
-            new BadRequestException('Only JPG and PNG images are allowed.'),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
+  @coverImageInterceptor
   @ApiOperation({ summary: 'Create a new event (multipart/form-data with optional coverImage)' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: {
     type: 'object',
     required: ['title', 'date', 'startTime', 'endTime', 'location', 'category', 'capacity', 'ticketPrice', 'description'],
     properties: {
-      coverImage: { type: 'string', format: 'binary', description: 'Cover image (JPG/PNG, max 5MB)' },
+      coverImage: { type: 'string', format: 'binary', description: 'Cover image (JPG/PNG/WebP/GIF/SVG, max 5MB)' },
       title: { type: 'string', example: 'Festival Afrobeat Lome 2026' },
       description: { type: 'string', example: 'The biggest afrobeat music festival' },
       date: { type: 'string', example: '2026-12-20' },
@@ -123,27 +121,7 @@ export class EventController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER, Role.ADMIN)
   @ApiBearerAuth()
-  @UseInterceptors(
-    FileInterceptor('coverImage', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) => {
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) => {
-        if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
-          return cb(
-            new BadRequestException('Only JPG and PNG images are allowed.'),
-            false,
-          );
-        }
-        cb(null, true);
-      },
-    }),
-  )
+  @coverImageInterceptor
   @ApiOperation({ summary: 'Update an event (owner or admin only)' })
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'id', description: 'Event UUID' })

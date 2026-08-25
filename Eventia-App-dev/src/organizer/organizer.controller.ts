@@ -14,8 +14,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { memoryStorage } from 'multer';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
@@ -34,7 +33,26 @@ import { CreateTicketCategoryDto } from 'src/ticket-category/dto/create-ticket-c
 import { CreateAcessControlDto } from 'src/acess-control/dto/create-acess-control.dto';
 import { EventStatut } from 'src/common/event-statut.enum';
 
-const ALLOWED_IMAGE_MIMES = ['image/jpeg', 'image/png'];
+const ALLOWED_IMAGE_MIMES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'image/svg+xml',
+];
+
+const coverImageInterceptor = UseInterceptors(
+  FileInterceptor('coverImage', {
+    storage: memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (_req, file, cb) => {
+      if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
+        return cb(new BadRequestException('Only JPG, PNG, WebP, GIF and SVG images are allowed.'), false);
+      }
+      cb(null, true);
+    },
+  }),
+);
 
 @ApiTags('Organizer')
 @ApiBearerAuth()
@@ -58,31 +76,14 @@ export class OrganizerController {
 
   @Post('events')
   @HttpCode(HttpStatus.CREATED)
-  @UseInterceptors(
-    FileInterceptor('coverImage', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) => {
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) => {
-        if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
-          return cb(new BadRequestException('Only JPG and PNG images are allowed.'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
+  @coverImageInterceptor
   @ApiOperation({ summary: 'Create a new event (multipart/form-data)' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({ schema: {
     type: 'object',
     required: ['title', 'date', 'startTime', 'endTime', 'location', 'category', 'capacity', 'ticketPrice', 'description'],
     properties: {
-      coverImage: { type: 'string', format: 'binary' },
+      coverImage: { type: 'string', format: 'binary', description: 'Cover image (JPG/PNG/WebP/GIF/SVG, max 5MB)' },
       title: { type: 'string' },
       description: { type: 'string' },
       date: { type: 'string' },
@@ -164,24 +165,7 @@ export class OrganizerController {
   }
 
   @Patch('events/:id')
-  @UseInterceptors(
-    FileInterceptor('coverImage', {
-      storage: diskStorage({
-        destination: './uploads',
-        filename: (_req, file, cb) => {
-          const uniqueName = `${Date.now()}-${Math.round(Math.random() * 1e9)}${extname(file.originalname)}`;
-          cb(null, uniqueName);
-        },
-      }),
-      limits: { fileSize: 5 * 1024 * 1024 },
-      fileFilter: (_req, file, cb) => {
-        if (!ALLOWED_IMAGE_MIMES.includes(file.mimetype)) {
-          return cb(new BadRequestException('Only JPG and PNG images are allowed.'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
+  @coverImageInterceptor
   @ApiOperation({ summary: 'Update an event (owner or admin only)' })
   @ApiConsumes('multipart/form-data')
   @ApiParam({ name: 'id', description: 'Event ID' })

@@ -1,11 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  NotFoundException,
-  BadRequestException,
-  InternalServerErrorException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Event } from './entities/event.entity';
@@ -15,6 +8,7 @@ import { EventStatut } from 'src/common/event-statut.enum';
 import { Role } from 'src/common/role.enum';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
+import { SupabaseService } from 'src/supabase/supabase.service';
 
 @Injectable()
 export class EventService {
@@ -25,6 +19,7 @@ export class EventService {
     private organizerProfileRepository: Repository<OrganizerProfile>,
     @InjectRepository(TicketCategory)
     private ticketCategoryRepository: Repository<TicketCategory>,
+    private readonly supabase: SupabaseService,
   ) {}
 
   private readonly logger = new Logger(EventService.name);
@@ -55,9 +50,14 @@ export class EventService {
         );
       }
 
-      const bannerImage = coverImageFile
-        ? `/uploads/${coverImageFile.filename}`
-        : undefined;
+      let bannerImage: string | undefined;
+      if (coverImageFile) {
+        bannerImage = await this.supabase.uploadImage(
+          coverImageFile.buffer,
+          coverImageFile.originalname,
+          coverImageFile.mimetype,
+        );
+      }
 
       const event = this.eventRepository.create({
         title: rest.title?.trim(),
@@ -164,7 +164,14 @@ export class EventService {
     }
 
     if (coverImageFile) {
-      event.bannerImage = `/uploads/${coverImageFile.filename}`;
+      if (event.bannerImage) {
+        await this.supabase.deleteImage(event.bannerImage);
+      }
+      event.bannerImage = await this.supabase.uploadImage(
+        coverImageFile.buffer,
+        coverImageFile.originalname,
+        coverImageFile.mimetype,
+      );
     }
 
     if (rest.title !== undefined) event.title = rest.title?.trim();
@@ -225,6 +232,10 @@ export class EventService {
           'You are not authorized to delete this event.',
         );
       }
+    }
+
+    if (event.bannerImage) {
+      await this.supabase.deleteImage(event.bannerImage);
     }
 
     await this.eventRepository.remove(event);

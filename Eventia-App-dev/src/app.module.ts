@@ -27,6 +27,7 @@ import { CommissionModule } from './commission/commission.module';
 import { EventCategoryModule } from './event-category/event-category.module';
 import { PromoCodeModule } from './promo-code/promo-code.module';
 import { OrganizerModule } from './organizer/organizer.module';
+import { SupabaseModule } from './supabase/supabase.module';
 
 
 
@@ -56,6 +57,7 @@ import { OrganizerModule } from './organizer/organizer.module';
     EventCategoryModule,
     PromoCodeModule,
     OrganizerModule,
+    SupabaseModule,
     TypeOrmModule.forRootAsync({
       
       imports: [ConfigModule],
