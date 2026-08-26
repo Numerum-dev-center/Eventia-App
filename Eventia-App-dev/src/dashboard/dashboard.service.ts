@@ -7,6 +7,7 @@ import { Order } from 'src/order/entities/order.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { User } from 'src/user/entities/user.entity';
 import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
+import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { EventStatut } from 'src/common/event-statut.enum';
 import { PaymentStatut } from 'src/common/payment-statut.enum';
 import { TicketValidationStatut } from 'src/common/ticket-validation-statut.enum';
@@ -26,6 +27,8 @@ export class DashboardService {
     private userRepository: Repository<User>,
     @InjectRepository(TicketCategory)
     private ticketCategoryRepository: Repository<TicketCategory>,
+    @InjectRepository(OrganizerProfile)
+    private organizerProfileRepository: Repository<OrganizerProfile>,
   ) {}
 
   private readonly logger = new Logger(DashboardService.name);
@@ -68,11 +71,20 @@ export class DashboardService {
     };
   }
 
-  async getOrganizerStats(organizerId: string, startDate?: string, endDate?: string) {
+  async getOrganizerStats(userId: string, startDate?: string, endDate?: string) {
+    const profile = await this.organizerProfileRepository.findOne({ where: { user: { id: userId } } });
+    if (!profile) {
+      return {
+        totalEvents: 0, publishedEvents: 0, totalTickets: 0, totalAvailable: 0,
+        totalSold: 0, totalRevenue: 0, totalPaidOrders: 0, fillRate: 0,
+        totalParticipants: 0, checkInRate: 0,
+      };
+    }
+
     const qb = this.eventRepository
       .createQueryBuilder('event')
       .leftJoinAndSelect('event.ticketsCategories', 'ticketsCategories')
-      .where('event.organizerProfileId = :organizerId', { organizerId });
+      .where('event.organizer_profile_id = :organizerId', { organizerId: profile.id });
 
     if (startDate) {
       qb.andWhere('event.startDate >= :startDate', { startDate });

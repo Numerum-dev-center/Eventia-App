@@ -8,9 +8,10 @@ import { Order } from 'src/order/entities/order.entity';
 import { Payment } from 'src/payment/entities/payment.entity';
 import { User } from 'src/user/entities/user.entity';
 import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
+import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Event, Ticket, Order, Payment, User, TicketCategory])],
+  imports: [TypeOrmModule.forFeature([Event, Ticket, Order, Payment, User, TicketCategory, OrganizerProfile])],
   controllers: [DashboardController],
   providers: [DashboardService],
   exports: [DashboardService],

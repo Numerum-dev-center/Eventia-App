@@ -30,6 +30,7 @@ import { OrganizerModule } from './organizer/organizer.module';
 import { SupabaseModule } from './supabase/supabase.module';
 import { ReviewModule } from './review/review.module';
 import { ReportsModule } from './reports/reports.module';
+import { PlatformSettingsModule } from './platform-settings/platform-settings.module';
 
 
 
@@ -62,6 +63,7 @@ import { ReportsModule } from './reports/reports.module';
     SupabaseModule,
     ReviewModule,
     ReportsModule,
+    PlatformSettingsModule,
     TypeOrmModule.forRootAsync({
       
       imports: [ConfigModule],
