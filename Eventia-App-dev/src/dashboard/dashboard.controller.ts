@@ -5,6 +5,7 @@ import {
   Res,
   UseGuards,
   Header,
+  Query,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { DashboardService } from './dashboard.service';
@@ -29,8 +30,12 @@ export class DashboardController {
   @Get('organizer/stats')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER)
-  getOrganizerStats(@GetUser() user: AuthenticatedUser) {
-    return this.dashboardService.getOrganizerStats(user.id);
+  getOrganizerStats(
+    @GetUser() user: AuthenticatedUser,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.dashboardService.getOrganizerStats(user.id, startDate, endDate);
   }
 
   @Get('event/:eventId/stats')

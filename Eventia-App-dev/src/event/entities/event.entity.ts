@@ -62,6 +62,9 @@ export class Event extends BaseEntity {
   })
   statut!: EventStatut;
 
+  @Column({ type: 'text', nullable: true })
+  rejectionReason?: string;
+
   @ManyToOne(() => OrganizerProfile, (profile) => profile.event)
   @JoinColumn({ name: 'organizer_profile_id' })
   organizerProfile!: OrganizerProfile;

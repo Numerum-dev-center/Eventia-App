@@ -442,7 +442,17 @@ async activateByToken(token: string) {
     updateuserDto: BaseUpdateProfileDto,
   ): Promise<User> {
     const user = await this.findOne(id);
-    
+
+    if (updateuserDto.email && updateuserDto.email !== user.email) {
+      const emailExists = await this.userRepository.findOne({
+        where: { email: updateuserDto.email.toLowerCase() },
+      });
+      if (emailExists) {
+        throw new ConflictException('This email is already in use.');
+      }
+      updateuserDto.email = updateuserDto.email.toLowerCase();
+    }
+
     Object.assign(user, updateuserDto);
     return await this.userRepository.save(user);
   }

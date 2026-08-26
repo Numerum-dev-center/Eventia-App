@@ -39,6 +39,24 @@ export class AuditLogController {
     return this.auditLogService.findByUser(userId);
   }
 
+  @Get('search')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  searchLogs(
+    @Query()
+    query: {
+      action?: string;
+      entity?: string;
+      userId?: string;
+      dateFrom?: string;
+      dateTo?: string;
+      page?: string;
+      limit?: string;
+    },
+  ) {
+    return this.auditLogService.searchLogs(query);
+  }
+
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { AdministratorService } from './administrator.service';
@@ -18,6 +19,13 @@ import { Roles } from 'src/auth/decorators/roles.decorator';
 export class AdministratorController {
   constructor(private readonly administratorService: AdministratorService) {}
 
+  @Get('users/search')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  searchUsers(@Query() query: { search?: string; role?: string; isActive?: string; page?: string; limit?: string }) {
+    return this.administratorService.searchUsers(query);
+  }
+
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -30,6 +38,13 @@ export class AdministratorController {
   @Roles(Role.ADMIN)
   getUsersByRole(@Param('role') role: Role) {
     return this.administratorService.getUsersByRole(role);
+  }
+
+  @Patch('users/:id/role')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  updateUserRole(@Param('id') id: string, @Body('role') role: Role) {
+    return this.administratorService.updateUserRole(id, role);
   }
 
   @Patch('users/:id/toggle-active')
@@ -46,6 +61,13 @@ export class AdministratorController {
     return this.administratorService.deleteUser(id);
   }
 
+  @Get('events/search')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  searchEvents(@Query() query: { search?: string; status?: string; category?: string; page?: string; limit?: string }) {
+    return this.administratorService.searchEvents(query);
+  }
+
   @Get('events')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
@@ -60,14 +82,35 @@ export class AdministratorController {
     return this.administratorService.getPendingEvents();
   }
 
+  @Get('events/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getEventById(@Param('id') id: string) {
+    return this.administratorService.getEventById(id);
+  }
+
   @Patch('events/:id/moderate')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
   moderateEvent(
     @Param('id') id: string,
-    @Body('statut') statut: EventStatut,
+    @Body() body: { statut: EventStatut; reason?: string },
   ) {
-    return this.administratorService.moderateEvent(id, statut);
+    return this.administratorService.moderateEvent(id, body.statut, body.reason);
+  }
+
+  @Patch('events/:id/reject')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  rejectEvent(@Param('id') id: string, @Body('reason') reason: string) {
+    return this.administratorService.rejectEvent(id, reason);
+  }
+
+  @Patch('events/:id/suspend')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  suspendEvent(@Param('id') id: string) {
+    return this.administratorService.suspendEvent(id);
   }
 
   @Get('financial')

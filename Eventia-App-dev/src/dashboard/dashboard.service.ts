@@ -68,11 +68,20 @@ export class DashboardService {
     };
   }
 
-  async getOrganizerStats(organizerId: string) {
-    const events = await this.eventRepository.find({
-      where: { organizerProfile: { id: organizerId } },
-      relations: { ticketsCategories: true },
-    });
+  async getOrganizerStats(organizerId: string, startDate?: string, endDate?: string) {
+    const qb = this.eventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.ticketsCategories', 'ticketsCategories')
+      .where('event.organizerProfileId = :organizerId', { organizerId });
+
+    if (startDate) {
+      qb.andWhere('event.startDate >= :startDate', { startDate });
+    }
+    if (endDate) {
+      qb.andWhere('event.startDate <= :endDate', { endDate });
+    }
+
+    const events = await qb.getMany();
 
     let totalTickets = 0;
     let totalAvailable = 0;
@@ -113,6 +122,28 @@ export class DashboardService {
         .getCount();
     }
 
+    // Get participants and check-in stats
+    let totalParticipants = 0;
+    let scannedTickets = 0;
+
+    if (eventIds.length > 0) {
+      const participantsResult = await this.ticketRepository
+        .createQueryBuilder('ticket')
+        .innerJoin('ticket.ticketCategory', 'tc')
+        .innerJoin('tc.event', 'e', 'e.id IN (:...eventIds)', { eventIds })
+        .innerJoin('ticket.order', 'o')
+        .select('COUNT(DISTINCT o.client_id)', 'count')
+        .getRawOne();
+      totalParticipants = Number(participantsResult?.count || 0);
+
+      scannedTickets = await this.ticketRepository
+        .createQueryBuilder('ticket')
+        .innerJoin('ticket.ticketCategory', 'tc')
+        .innerJoin('tc.event', 'e', 'e.id IN (:...eventIds)', { eventIds })
+        .where('ticket.validationStatut = :status', { status: TicketValidationStatut.SCANNNED })
+        .getCount();
+    }
+
     return {
       totalEvents: events.length,
       publishedEvents: events.filter((e) => e.statut === EventStatut.PUBLISHED).length,
@@ -122,6 +153,8 @@ export class DashboardService {
       totalRevenue,
       totalPaidOrders,
       fillRate: totalTickets > 0 ? Math.round((totalSold / totalTickets) * 100) : 0,
+      totalParticipants,
+      checkInRate: totalSold > 0 ? Math.round((scannedTickets / totalSold) * 100) : 0,
     };
   }
 

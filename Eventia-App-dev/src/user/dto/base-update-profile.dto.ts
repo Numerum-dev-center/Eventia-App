@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsPhoneNumber, IsOptional, IsDateString, IsEnum } from 'class-validator';
+import { IsString, IsPhoneNumber, IsOptional, IsDateString, IsEnum, IsEmail } from 'class-validator';
 import { Sex } from 'src/common/sex.enum';
 
 export class BaseUpdateProfileDto {
@@ -26,6 +26,11 @@ export class BaseUpdateProfileDto {
     description: 'Phone number, always include country code'
   })
   phoneNumber?: string;
+
+  @IsOptional()
+  @IsEmail()
+  @ApiProperty({ example: 'newemail@test.com', description: 'User email address' })
+  email?: string;
 
   @IsOptional()
   @IsString()

@@ -22,6 +22,9 @@ export class Commission extends BaseEntity {
   @Column({ default: false })
   isPaid!: boolean;
 
+  @Column({ type: 'text', nullable: true })
+  refusalReason?: string;
+
   @ManyToOne(() => Event)
   @JoinColumn({ name: 'event_id' })
   event!: Event;

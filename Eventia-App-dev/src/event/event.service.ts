@@ -86,19 +86,105 @@ export class EventService {
     }
   }
 
-  async findAll(): Promise<Event[]> {
-    return await this.eventRepository.find({
-      relations: { organizerProfile: true, ticketsCategories: true },
-      order: { createdAt: 'DESC' },
-    });
+  async findAll(query?: { search?: string; status?: string; category?: string; page?: string; limit?: string }): Promise<{ events: Event[]; pagination: any }> {
+    const qb = this.eventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.organizerProfile', 'organizerProfile')
+      .leftJoinAndSelect('event.ticketsCategories', 'ticketsCategories');
+
+    if (query?.search) {
+      qb.andWhere('(LOWER(event.title) LIKE :search OR LOWER(event.description) LIKE :search)', { search: `%${query.search.toLowerCase()}%` });
+    }
+    if (query?.status) {
+      qb.andWhere('event.statut = :status', { status: query.status });
+    }
+    if (query?.category) {
+      qb.andWhere('event.category = :category', { category: query.category });
+    }
+
+    qb.orderBy('event.createdAt', 'DESC');
+
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query?.limit) || 20));
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [events, total] = await qb.getManyAndCount();
+    return { events, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
-  async findPublished(): Promise<Event[]> {
-    return await this.eventRepository.find({
-      where: { statut: EventStatut.PUBLISHED },
-      relations: { organizerProfile: true, ticketsCategories: true },
-      order: { startDate: 'ASC' },
-    });
+  async findPublished(query: {
+    search?: string;
+    category?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    location?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    sort?: string;
+    page?: string;
+    limit?: string;
+  }): Promise<{ events: Event[]; pagination: any }> {
+    const qb = this.eventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.organizerProfile', 'organizerProfile')
+      .leftJoinAndSelect('event.ticketsCategories', 'ticketsCategories')
+      .where('event.statut = :statut', { statut: EventStatut.PUBLISHED });
+
+    if (query.search) {
+      qb.andWhere('(LOWER(event.title) LIKE :search OR LOWER(event.description) LIKE :search OR LOWER(event.location) LIKE :search)',
+        { search: `%${query.search.toLowerCase()}%` });
+    }
+
+    if (query.category) {
+      qb.andWhere('event.category = :category', { category: query.category });
+    }
+
+    if (query.dateFrom) {
+      qb.andWhere('event.startDate >= :dateFrom', { dateFrom: query.dateFrom });
+    }
+
+    if (query.dateTo) {
+      qb.andWhere('event.startDate <= :dateTo', { dateTo: query.dateTo });
+    }
+
+    if (query.location) {
+      qb.andWhere('LOWER(event.location) LIKE :location', { location: `%${query.location.toLowerCase()}%` });
+    }
+
+    if (query.minPrice) {
+      qb.andWhere('event.ticketPrice >= :minPrice', { minPrice: Number(query.minPrice) });
+    }
+
+    if (query.maxPrice) {
+      qb.andWhere('event.ticketPrice <= :maxPrice', { maxPrice: Number(query.maxPrice) });
+    }
+
+    switch (query.sort) {
+      case 'date_asc': qb.orderBy('event.startDate', 'ASC'); break;
+      case 'date_desc': qb.orderBy('event.startDate', 'DESC'); break;
+      case 'price_asc': qb.orderBy('event.ticketPrice', 'ASC'); break;
+      case 'price_desc': qb.orderBy('event.ticketPrice', 'DESC'); break;
+      case 'newest': qb.orderBy('event.createdAt', 'DESC'); break;
+      default: qb.orderBy('event.startDate', 'ASC');
+    }
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query.limit) || 12));
+    const skip = (page - 1) * limit;
+
+    qb.skip(skip).take(limit);
+
+    const [events, total] = await qb.getManyAndCount();
+
+    return {
+      events,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(id: string): Promise<Event> {

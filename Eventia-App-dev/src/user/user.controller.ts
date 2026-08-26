@@ -48,6 +48,26 @@ export class UserController {
     return await this.userService.findOne(id);
   }
 
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user profile' })
+  @ApiResponse({ status: 200, description: 'Current user profile.' })
+  async getMe(@GetUser() user: AuthenticatedUser) {
+    return this.userService.findOne(user.id);
+  }
+
+  @Patch('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update current user profile (any role)' })
+  @ApiBody({ type: BaseUpdateProfileDto })
+  @ApiResponse({ status: 200, description: 'Profile updated successfully.' })
+  async updateMe(
+    @GetUser() user: AuthenticatedUser,
+    @Body() updateDto: BaseUpdateProfileDto,
+  ) {
+    return this.userService.update(user.id, updateDto);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.userService.findOne(id);

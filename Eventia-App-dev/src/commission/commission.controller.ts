@@ -4,6 +4,7 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { CommissionService } from './commission.service';
@@ -22,6 +23,22 @@ export class CommissionController {
   @Roles(Role.ADMIN)
   findAll() {
     return this.commissionService.findAll();
+  }
+
+  @Get('history')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getPayoutHistory(
+    @Query() query: { isPaid?: string; page?: string; limit?: string },
+  ) {
+    return this.commissionService.getPayoutHistory(query);
+  }
+
+  @Get('organizer/:organizerId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN, Role.ORGANIZER)
+  getByOrganizer(@Param('organizerId') organizerId: string) {
+    return this.commissionService.getByOrganizer(organizerId);
   }
 
   @Get('event/:eventId')
@@ -43,6 +60,16 @@ export class CommissionController {
   @Roles(Role.ADMIN)
   markAsPaid(@Param('id') id: string) {
     return this.commissionService.markAsPaid(id);
+  }
+
+  @Patch(':id/refuse')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  refusePayout(
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+  ) {
+    return this.commissionService.refusePayout(id, reason);
   }
 
   @Get('stats')

@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as crypto from 'crypto';
+import * as QRCode from 'qrcode';
 import { Ticket } from './entities/ticket.entity';
 import { TicketValidationStatut } from 'src/common/ticket-validation-statut.enum';
 
@@ -84,6 +85,28 @@ export class TicketService {
     });
   }
 
+  async findByClient(clientId: string, status?: string): Promise<Ticket[]> {
+    const qb = this.ticketRepository
+      .createQueryBuilder('ticket')
+      .innerJoin('ticket.order', 'order')
+      .innerJoinAndSelect('ticket.ticketCategory', 'ticketCategory')
+      .leftJoinAndSelect('ticketCategory.event', 'event')
+      .leftJoinAndSelect('ticket.order', 'orderFull')
+      .where('order.client_id = :clientId', { clientId });
+
+    if (status === 'upcoming') {
+      qb.andWhere('ticket.validationStatut = :status', { status: TicketValidationStatut.VALID })
+        .andWhere('event.startDate > :now', { now: new Date().toISOString() });
+    } else if (status === 'used') {
+      qb.andWhere('ticket.validationStatut = :status', { status: TicketValidationStatut.SCANNNED });
+    } else if (status === 'cancelled') {
+      qb.andWhere('ticket.validationStatut = :status', { status: TicketValidationStatut.INVALID });
+    }
+
+    qb.orderBy('ticket.createdAt', 'DESC');
+    return qb.getMany();
+  }
+
   async validateTicket(id: string, scannerUserId: string): Promise<Ticket> {
     const ticket = await this.findOne(id);
 
@@ -104,6 +127,21 @@ export class TicketService {
     return await this.ticketRepository.save(ticket);
   }
 
+  async generateQRCode(ticketId: string): Promise<string> {
+    const ticket = await this.ticketRepository.findOne({
+      where: { id: ticketId },
+      select: { id: true, uniqueCodeCrypto: true },
+    });
+    if (!ticket) {
+      throw new NotFoundException(`Ticket #${ticketId} not found`);
+    }
+    const qrData = JSON.stringify({
+      ticketId: ticket.id,
+      code: ticket.uniqueCodeCrypto,
+    });
+    return QRCode.toDataURL(qrData);
+  }
+
   async countByEvent(eventId: string): Promise<number> {
     return await this.ticketRepository
       .createQueryBuilder('ticket')
@@ -121,15 +159,36 @@ export class TicketService {
       .getCount();
   }
 
-  async findByEvent(eventId: string): Promise<Ticket[]> {
-    return await this.ticketRepository
+  async findByEvent(eventId: string, query?: { search?: string; ticketType?: string; paymentStatus?: string; page?: string; limit?: string }): Promise<{ tickets: Ticket[]; pagination: any }> {
+    const qb = this.ticketRepository
       .createQueryBuilder('ticket')
       .innerJoin('ticket.ticketCategory', 'tc')
       .innerJoin('tc.event', 'event', 'event.id = :eventId', { eventId })
       .leftJoinAndSelect('ticket.order', 'order')
       .leftJoinAndSelect('order.client', 'client')
-      .leftJoinAndSelect('ticket.ticketCategory', 'ticketCategory')
-      .getMany();
+      .leftJoinAndSelect('ticket.ticketCategory', 'ticketCategory');
+
+    if (query?.search) {
+      qb.andWhere('(LOWER(client.firstName) LIKE :search OR LOWER(client.lastName) LIKE :search OR LOWER(client.email) LIKE :search OR LOWER(client.phoneNumber) LIKE :search)',
+        { search: `%${query.search.toLowerCase()}%` });
+    }
+
+    if (query?.ticketType) {
+      qb.andWhere('tc.id = :ticketType', { ticketType: query.ticketType });
+    }
+
+    if (query?.paymentStatus) {
+      qb.andWhere('order.paymentStatut = :paymentStatus', { paymentStatus: query.paymentStatus });
+    }
+
+    qb.orderBy('ticket.createdAt', 'DESC');
+
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query?.limit) || 20));
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [tickets, total] = await qb.getManyAndCount();
+    return { tickets, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async remove(id: string): Promise<void> {

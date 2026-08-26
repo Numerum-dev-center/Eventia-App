@@ -82,4 +82,53 @@ export class CommissionService {
       .getRawOne();
     return Number(result?.total || 0);
   }
+
+  async getPayoutHistory(query: {
+    isPaid?: string;
+    page?: string;
+    limit?: string;
+  }) {
+    const qb = this.commissionRepository
+      .createQueryBuilder('commission')
+      .leftJoinAndSelect('commission.event', 'event');
+
+    if (query.isPaid !== undefined) {
+      qb.andWhere('commission.isPaid = :isPaid', {
+        isPaid: query.isPaid === 'true',
+      });
+    }
+
+    qb.orderBy('commission.createdAt', 'DESC');
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(50, Number(query.limit) || 20);
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [commissions, total] = await qb.getManyAndCount();
+    return {
+      commissions,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
+
+  async refusePayout(id: string, reason: string) {
+    const commission = await this.commissionRepository.findOne({ where: { id } });
+    if (!commission)
+      throw new NotFoundException(`Commission #${id} not found`);
+    commission.refusalReason = reason;
+    commission.isPaid = false;
+    return this.commissionRepository.save(commission);
+  }
+
+  async getByOrganizer(organizerId: string) {
+    return this.commissionRepository
+      .createQueryBuilder('commission')
+      .leftJoinAndSelect('commission.event', 'event')
+      .innerJoin(
+        'event.organizerProfile',
+        'op',
+        'op.id = :organizerId',
+        { organizerId },
+      )
+      .getMany();
+  }
 }

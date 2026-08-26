@@ -62,4 +62,51 @@ export class AuditLogService {
       order: { createdAt: 'DESC' },
     });
   }
+
+  async searchLogs(query: {
+    action?: string;
+    entity?: string;
+    userId?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    page?: string;
+    limit?: string;
+  }) {
+    const qb = this.auditLogRepository
+      .createQueryBuilder('log')
+      .leftJoinAndSelect('log.user', 'user');
+
+    if (query.action) {
+      qb.andWhere('log.action = :action', { action: query.action });
+    }
+    if (query.entity) {
+      qb.andWhere('log.targetEntity = :entity', { entity: query.entity });
+    }
+    if (query.userId) {
+      qb.andWhere('log.userId = :userId', { userId: query.userId });
+    }
+    if (query.dateFrom) {
+      qb.andWhere('log.createdAt >= :dateFrom', { dateFrom: query.dateFrom });
+    }
+    if (query.dateTo) {
+      qb.andWhere('log.createdAt <= :dateTo', { dateTo: query.dateTo });
+    }
+
+    qb.orderBy('log.createdAt', 'DESC');
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(50, Number(query.limit) || 20);
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [logs, total] = await qb.getManyAndCount();
+    return {
+      logs,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
 }

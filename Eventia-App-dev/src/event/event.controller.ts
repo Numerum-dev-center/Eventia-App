@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Query,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -99,13 +100,27 @@ export class EventController {
   }
 
   @Get()
-  findAll() {
-    return this.eventService.findAll();
+  @ApiOperation({ summary: 'Get all events (admin) with search/filter' })
+  findAll(@Query() query: { search?: string; status?: string; category?: string; page?: string; limit?: string }) {
+    return this.eventService.findAll(query);
   }
 
   @Get('published')
-  findPublished() {
-    return this.eventService.findPublished();
+  @ApiOperation({ summary: 'Get published events with search, filter, sort, pagination' })
+  @ApiResponse({ status: 200, description: 'List of published events.' })
+  findPublished(@Query() query: {
+    search?: string;
+    category?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    location?: string;
+    minPrice?: string;
+    maxPrice?: string;
+    sort?: string;
+    page?: string;
+    limit?: string;
+  }) {
+    return this.eventService.findPublished(query);
   }
 
   @Get(':id')

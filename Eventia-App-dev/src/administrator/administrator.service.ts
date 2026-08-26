@@ -77,7 +77,7 @@ export class AdministratorService {
     });
   }
 
-  async moderateEvent(eventId: string, statut: EventStatut): Promise<Event> {
+  async moderateEvent(eventId: string, statut: EventStatut, reason?: string): Promise<Event> {
     const event = await this.eventRepository.findOne({
       where: { id: eventId },
     });
@@ -85,7 +85,92 @@ export class AdministratorService {
       throw new NotFoundException(`Événement #${eventId} non trouvé`);
     }
     event.statut = statut;
+    if (reason) {
+      (event as any).rejectionReason = reason;
+    } else {
+      (event as any).rejectionReason = null;
+    }
     return await this.eventRepository.save(event);
+  }
+
+  async searchUsers(query: { search?: string; role?: string; isActive?: string; page?: string; limit?: string }) {
+    const qb = this.userRepository.createQueryBuilder('user');
+
+    if (query.search) {
+      qb.andWhere('(LOWER(user.email) LIKE :search OR LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.phoneNumber) LIKE :search)',
+        { search: `%${query.search.toLowerCase()}%` });
+    }
+    if (query.role) {
+      qb.andWhere('user.role = :role', { role: query.role });
+    }
+    if (query.isActive !== undefined) {
+      qb.andWhere('user.isActive = :isActive', { isActive: query.isActive === 'true' });
+    }
+
+    qb.orderBy('user.createdAt', 'DESC');
+
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query.limit) || 20));
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [users, total] = await qb.getManyAndCount();
+    return { users, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async updateUserRole(userId: string, role: Role): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException(`User #${userId} not found`);
+    user.role = role;
+    return this.userRepository.save(user);
+  }
+
+  async rejectEvent(eventId: string, reason: string): Promise<Event> {
+    const event = await this.eventRepository.findOne({ where: { id: eventId } });
+    if (!event) throw new NotFoundException(`Event #${eventId} not found`);
+    event.statut = EventStatut.SUSPENDED;
+    (event as any).rejectionReason = reason;
+    return this.eventRepository.save(event);
+  }
+
+  async suspendEvent(eventId: string): Promise<Event> {
+    const event = await this.eventRepository.findOne({ where: { id: eventId } });
+    if (!event) throw new NotFoundException(`Event #${eventId} not found`);
+    event.statut = EventStatut.SUSPENDED;
+    return this.eventRepository.save(event);
+  }
+
+  async searchEvents(query: { search?: string; status?: string; category?: string; page?: string; limit?: string }) {
+    const qb = this.eventRepository
+      .createQueryBuilder('event')
+      .leftJoinAndSelect('event.organizerProfile', 'organizerProfile')
+      .leftJoinAndSelect('event.ticketsCategories', 'ticketsCategories');
+
+    if (query.search) {
+      qb.andWhere('(LOWER(event.title) LIKE :search OR LOWER(event.description) LIKE :search)', { search: `%${query.search.toLowerCase()}%` });
+    }
+    if (query.status) {
+      qb.andWhere('event.statut = :status', { status: query.status });
+    }
+    if (query.category) {
+      qb.andWhere('event.category = :category', { category: query.category });
+    }
+
+    qb.orderBy('event.createdAt', 'DESC');
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(50, Math.max(1, Number(query.limit) || 20));
+    qb.skip((page - 1) * limit).take(limit);
+
+    const [events, total] = await qb.getManyAndCount();
+    return { events, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  async getEventById(eventId: string) {
+    const event = await this.eventRepository.findOne({
+      where: { id: eventId },
+      relations: { organizerProfile: true, ticketsCategories: true, media: true },
+    });
+    if (!event) throw new NotFoundException(`Event #${eventId} not found`);
+    return event;
   }
 
   async getFinancialSummary() {
