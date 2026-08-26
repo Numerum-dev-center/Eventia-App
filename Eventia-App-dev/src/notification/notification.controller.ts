@@ -1,60 +1,38 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Body,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Patch, Param, Query, UseGuards } from '@nestjs/common';
 import { NotificationService } from './notification.service';
-import { CreateNotificationDto } from './dto/create-notification.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/roles.guard';
-import { Role } from 'src/common/role.enum';
-import { Roles } from 'src/auth/decorators/roles.decorator';
 import { GetUser } from 'src/auth/decorators/get-user.decorator';
 import { AuthenticatedUser } from 'src/auth/interfaces/authenticated-user.interface';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Notifications')
 @Controller('notifications')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
 export class NotificationController {
   constructor(private readonly notificationService: NotificationService) {}
 
-  @Post()
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(Role.ADMIN)
-  create(@Body() dto: CreateNotificationDto) {
-    return this.notificationService.create(dto);
-  }
-
   @Get()
-  @UseGuards(JwtAuthGuard)
-  findByUser(@GetUser() user: AuthenticatedUser) {
-    return this.notificationService.findByUser(user.id);
+  @ApiOperation({ summary: 'Get my notifications' })
+  findAll(@GetUser() user: AuthenticatedUser, @Query('unreadOnly') unreadOnly?: string) {
+    return this.notificationService.findByUser(user.id, unreadOnly === 'true');
   }
 
   @Get('unread-count')
-  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Get unread notifications count' })
   getUnreadCount(@GetUser() user: AuthenticatedUser) {
     return this.notificationService.getUnreadCount(user.id);
   }
 
   @Patch(':id/read')
-  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Mark notification as read' })
   markAsRead(@Param('id') id: string) {
     return this.notificationService.markAsRead(id);
   }
 
   @Patch('read-all')
-  @UseGuards(JwtAuthGuard)
+  @ApiOperation({ summary: 'Mark all notifications as read' })
   markAllAsRead(@GetUser() user: AuthenticatedUser) {
     return this.notificationService.markAllAsRead(user.id);
-  }
-
-  @Delete(':id')
-  @UseGuards(JwtAuthGuard)
-  remove(@Param('id') id: string) {
-    return this.notificationService.remove(id);
   }
 }

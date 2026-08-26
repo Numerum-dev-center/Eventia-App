@@ -28,6 +28,8 @@ import { EventCategoryModule } from './event-category/event-category.module';
 import { PromoCodeModule } from './promo-code/promo-code.module';
 import { OrganizerModule } from './organizer/organizer.module';
 import { SupabaseModule } from './supabase/supabase.module';
+import { ReviewModule } from './review/review.module';
+import { ReportsModule } from './reports/reports.module';
 
 
 
@@ -58,6 +60,8 @@ import { SupabaseModule } from './supabase/supabase.module';
     PromoCodeModule,
     OrganizerModule,
     SupabaseModule,
+    ReviewModule,
+    ReportsModule,
     TypeOrmModule.forRootAsync({
       
       imports: [ConfigModule],
