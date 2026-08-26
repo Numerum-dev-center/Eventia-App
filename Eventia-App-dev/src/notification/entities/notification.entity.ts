@@ -14,7 +14,7 @@ export enum NotificationType {
   EVENT_REMINDER = 'event_reminder',
 }
 
-@Entity()
+@Entity('notifications')
 export class Notification extends BaseEntity {
   @Column()
   title!: string;
