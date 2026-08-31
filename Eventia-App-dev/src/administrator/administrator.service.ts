@@ -42,6 +42,7 @@ export class AdministratorService {
   async getAllUsers(): Promise<User[]> {
     return await this.userRepository.find({
       order: { createdAt: 'DESC' },
+      relations: { organizerProfile: true },
     });
   }
 
@@ -49,6 +50,7 @@ export class AdministratorService {
     return await this.userRepository.find({
       where: { role },
       order: { createdAt: 'DESC' },
+      relations: { organizerProfile: true },
     });
   }
 
@@ -104,7 +106,9 @@ export class AdministratorService {
   }
 
   async searchUsers(query: { search?: string; role?: string; isActive?: string; page?: string; limit?: string }) {
-    const qb = this.userRepository.createQueryBuilder('user');
+    const qb = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.organizerProfile', 'organizerProfile');
 
     if (query.search) {
       qb.andWhere('(LOWER(user.email) LIKE :search OR LOWER(user.firstName) LIKE :search OR LOWER(user.lastName) LIKE :search OR LOWER(user.phoneNumber) LIKE :search)',
