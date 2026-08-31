@@ -82,21 +82,35 @@ export class AdministratorService {
   }
 
   async getAllEvents(): Promise<Event[]> {
-    return await this.eventRepository.find({
-      relations: { organizerProfile: true, ticketsCategories: true },
+    const events = await this.eventRepository.find({
+      relations: { organizerProfile: { user: true }, ticketsCategories: true },
       order: { createdAt: 'DESC' },
     });
+    this.sanitizeEventsOrganizer(events);
+    return events;
   }
 
   async getPendingEvents(): Promise<Event[]> {
-    return await this.eventRepository.find({
+    const events = await this.eventRepository.find({
       where: [
         { statut: EventStatut.DRAFT },
         { statut: EventStatut.PENDING_REVIEW },
       ],
-      relations: { organizerProfile: true },
+      relations: { organizerProfile: { user: true } },
       order: { createdAt: 'DESC' },
     });
+    this.sanitizeEventsOrganizer(events);
+    return events;
+  }
+
+  private sanitizeEventsOrganizer(events: Event[]): void {
+    for (const e of events) {
+      const orgUser = (e as any).organizerProfile?.user;
+      if (orgUser) {
+        const { password, activationToken, twoFASecretCode, resetPasswordCode, ...safe } = orgUser;
+        (e as any).organizerProfile.user = safe;
+      }
+    }
   }
 
   async moderateEvent(eventId: string, statut: EventStatut, reason?: string): Promise<Event> {

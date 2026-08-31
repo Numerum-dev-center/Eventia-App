@@ -11,12 +11,14 @@ import { OrganizerProfile } from './entities/organizer-profile.entity';
 import { CreateOrganizerProfileDto } from './dto/create-organizer-profile.dto';
 import { UpdateOrganizerProfileDto } from './dto/update-organizer-profile.dto';
 import { StatutVerification } from 'src/common/profile-organizer-validation-statut.enum';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class OrganizerProfileService {
   constructor(
     @InjectRepository(OrganizerProfile)
     private organizerProfileRepository: Repository<OrganizerProfile>,
+    private readonly mailService: MailService,
   ) {}
 
   private readonly logger = new Logger(OrganizerProfileService.name);
@@ -81,7 +83,30 @@ export class OrganizerProfileService {
   ): Promise<OrganizerProfile> {
     const profile = await this.findOne(id);
     profile.verificationStatut = statut;
-    return await this.organizerProfileRepository.save(profile);
+    const saved = await this.organizerProfileRepository.save(profile);
+
+    const organizerUser = (saved as any).user;
+    const organizerName =
+      organizerUser?.firstName || organizerUser?.lastName || organizerUser?.email || 'cher organisateur';
+
+    if (organizerUser?.email) {
+      if (statut === StatutVerification.APPROVED) {
+        this.mailService
+          .sendOrganizerApprovedEmail(organizerUser.email, organizerName)
+          .catch((err) => this.logger.warn(`Approval email failed: ${err.message}`));
+      } else if (statut === StatutVerification.REJECTED) {
+        this.mailService
+          .sendOrganizerRejectedEmail(organizerUser.email, organizerName, 'Veuillez corriger votre dossier')
+          .catch((err) => this.logger.warn(`Rejection email failed: ${err.message}`));
+      }
+    }
+
+    if (organizerUser) {
+      const { password, activationToken, twoFASecretCode, resetPasswordCode, ...safeUser } = organizerUser;
+      (saved as any).user = safeUser;
+    }
+
+    return saved;
   }
 
   async remove(id: string): Promise<void> {

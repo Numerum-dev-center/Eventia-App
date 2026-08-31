@@ -65,6 +65,37 @@ export class MailService {
     }
   }
 
-    
+  async sendOrganizerApprovedEmail(email: string, organizerName: string): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Votre profil organisateur a été validé',
+        html: `<p>Bonjour <strong>${organizerName}</strong>,</p>
+<p>Félicitations ! Votre profil organisateur a été <strong>validé</strong> par l'administrateur Eventia.</p>
+<p>Vous pouvez désormais créer des événements, les publier et gérer votre billetterie.</p>
+<p>Cordialement,<br>L'équipe Eventia</p>`,
+      });
+      this.logger.log(`Organizer approval email sent successfully to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send organizer approval email to ${email}:`, error);
+    }
+  }
+
+  async sendOrganizerRejectedEmail(email: string, organizerName: string, reason: string): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: 'Votre profil organisateur a été rejeté',
+        html: `<p>Bonjour <strong>${organizerName}</strong>,</p>
+<p>Nous sommes désolés, votre profil organisateur a été <strong>rejeté</strong> par l'administrateur Eventia.</p>
+<p>Motif : <strong>${reason || 'Aucun motif fourni'}</strong></p>
+<p>Vous pouvez corriger les informations de votre profil et le soumettre à nouveau.</p>
+<p>Cordialement,<br>L'équipe Eventia</p>`,
+      });
+      this.logger.log(`Organizer rejection email sent successfully to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send organizer rejection email to ${email}:`, error);
+    }
+  }
 
 }
