@@ -119,7 +119,7 @@ async requestActivationToken(userId: string) {
     activationTokenExpires: expires,
   });
 
-  const backendUrl = this.configService.get<string>('BACKEND_URL');
+  const backendUrl = this.configService.get<string>('BACKEND_URL') || 'https://eventia-app-c6b5.onrender.com';
   const activationLink = `${backendUrl}/auth/activate?token=${token}`;
 
   // Envoyer l'e-mail avec le lien (non bloquant si Brevo non configuré)

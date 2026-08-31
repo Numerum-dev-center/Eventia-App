@@ -65,12 +65,12 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'none' });
 
     // 3. Redirection DIRECTE vers le Dashboard React (local ou prod)
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
     return res.redirect(`${frontendUrl}/organizer/dashboard`);
     
   } catch (error) {
     // En cas d'erreur, rediriger vers une page d'erreur sur le front
-    const frontendUrl = this.configService.get<string>('FRONTEND_URL');
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
     return res.redirect(`${frontendUrl}/auth/error`);
   }
 }
@@ -104,7 +104,7 @@ export class AuthController {
   // 2. Génération de la paire de tokens
   const { accessToken, refreshToken } = await this.authService.generateTokens(user, req);
   
-  const frontendUrl = this.configService.get<string>('BACKEND_URL');
+  const frontendUrl = this.configService.get<string>('BACKEND_URL') || 'https://eventia-app-c6b5.onrender.com';
   // 3. Redirection vers le Front avec les tokens
   // On passe les deux tokens en query params
   res.redirect(
