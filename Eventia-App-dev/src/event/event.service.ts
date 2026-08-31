@@ -1,10 +1,11 @@
 import { Injectable, Logger, NotFoundException, BadRequestException, InternalServerErrorException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DeepPartial } from 'typeorm';
 import { Event } from './entities/event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventStatut } from 'src/common/event-statut.enum';
+import { EventCategory } from 'src/common/event-category.enum';
 import { StatutVerification } from 'src/common/profile-organizer-validation-statut.enum';
 import { Role } from 'src/common/role.enum';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
@@ -46,25 +47,10 @@ export class EventService {
         );
       }
 
-      const {
-        titre,
-        description,
-        categorie,
-        lieuNom,
-        adresse,
-        latitude,
-        longitude,
-        dateDebut,
-        dateFin,
-        heureDebut,
-        heureFin,
-        capacite,
-        prixBillet,
-        ...rest
-      } = createEventDto;
+      const p = this.normalizeEventPayload(createEventDto as any);
 
-      const startDate = this.combineDateAndTime(dateDebut, heureDebut ?? '00:00');
-      const endDate = this.combineDateAndTime(dateFin, heureFin ?? '23:59');
+      const startDate = this.parseDateTime(p.dateDebut, true, p.heureDebut);
+      const endDate = this.parseDateTime(p.dateFin, false, p.heureFin);
 
       if (endDate <= startDate) {
         throw new BadRequestException(
@@ -82,21 +68,21 @@ export class EventService {
       }
 
       const event = this.eventRepository.create({
-        title: titre?.trim(),
-        description: description?.trim(),
-        category: categorie,
-        location: lieuNom?.trim(),
-        placeName: lieuNom?.trim(),
-        adress: adresse?.trim(),
-        latitude,
-        longitude,
-        ticketPrice: prixBillet,
+        title: p.titre,
+        description: p.description,
+        category: p.categorie as EventCategory,
+        location: p.lieuNom,
+        placeName: p.lieuNom,
+        adress: p.adresse,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        ticketPrice: p.prixBillet,
         startDate,
         endDate,
         bannerImage,
-        maxCapacity: capacite,
+        maxCapacity: p.capacite,
         organizerProfile: { id: profile.id },
-      });
+      } as DeepPartial<Event>);
 
       return await this.eventRepository.save(event);
     } catch (error) {
@@ -261,32 +247,13 @@ export class EventService {
       }
     }
 
-    const {
-      titre,
-      description,
-      categorie,
-      lieuNom,
-      adresse,
-      latitude,
-      longitude,
-      dateDebut,
-      dateFin,
-      heureDebut,
-      heureFin,
-      capacite,
-      prixBillet,
-      ...rest
-    } = updateEventDto;
+    const p = this.normalizeEventPayload(updateEventDto as any);
 
-    if (dateDebut && heureDebut) {
-      event.startDate = this.combineDateAndTime(dateDebut, heureDebut);
-    } else if (dateDebut) {
-      event.startDate = this.combineDateAndTime(dateDebut, '00:00');
+    if (p.dateDebut || p.heureDebut) {
+      event.startDate = this.parseDateTime(p.dateDebut ?? '', true, p.heureDebut);
     }
-    if (dateFin && heureFin) {
-      event.endDate = this.combineDateAndTime(dateFin, heureFin);
-    } else if (dateFin) {
-      event.endDate = this.combineDateAndTime(dateFin, '23:59');
+    if (p.dateFin || p.heureFin) {
+      event.endDate = this.parseDateTime(p.dateFin ?? '', false, p.heureFin);
     }
 
     if (event.endDate && event.startDate && event.endDate <= event.startDate) {
@@ -304,18 +271,18 @@ export class EventService {
       );
     }
 
-    if (titre !== undefined) event.title = titre?.trim();
-    if (description !== undefined) event.description = description?.trim();
-    if (categorie !== undefined) event.category = categorie;
-    if (lieuNom !== undefined) {
-      event.location = lieuNom?.trim();
-      event.placeName = lieuNom?.trim();
+    if (p.titre !== undefined) event.title = p.titre;
+    if (p.description !== undefined) event.description = p.description;
+    if (p.categorie !== undefined) event.category = p.categorie as EventCategory;
+    if (p.lieuNom !== undefined) {
+      event.location = p.lieuNom;
+      event.placeName = p.lieuNom;
     }
-    if (adresse !== undefined) event.adress = adresse?.trim();
-    if (latitude !== undefined) event.latitude = latitude;
-    if (longitude !== undefined) event.longitude = longitude;
-    if (prixBillet !== undefined) event.ticketPrice = prixBillet;
-    if (capacite !== undefined) event.maxCapacity = capacite;
+    if (p.adresse !== undefined) event.adress = p.adresse;
+    if (p.latitude !== undefined) event.latitude = p.latitude;
+    if (p.longitude !== undefined) event.longitude = p.longitude;
+    if (p.prixBillet !== undefined) event.ticketPrice = p.prixBillet;
+    if (p.capacite !== undefined) event.maxCapacity = p.capacite;
 
     return await this.eventRepository.save(event);
   }
@@ -380,7 +347,94 @@ export class EventService {
     });
   }
 
-  private combineDateAndTime(date: string, time: string): Date {
-    return new Date(`${date}T${time}:00.000Z`);
+  private parseDateTime(date: string, isStart: boolean, time?: string): Date {
+    const t = time?.trim() || (isStart ? '00:00' : '23:59');
+    const d = (date || '').trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      return new Date(`${d}T${t}:00.000Z`);
+    }
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) {
+      throw new BadRequestException('Date invalide.');
+    }
+    return dt;
+  }
+
+  private number(value: unknown): number | undefined {
+    if (value === undefined || value === null || value === '') return undefined;
+    if (typeof value === 'number') return value;
+    const n = Number(String(value).replace(/\s/g, '').replace(',', '.'));
+    return isNaN(n) ? undefined : n;
+  }
+
+  private string(value: unknown): string | undefined {
+    if (value === undefined || value === null) return undefined;
+    if (typeof value === 'string') return value.trim() === '' ? undefined : value.trim();
+    if (typeof value === 'number') return String(value);
+    return undefined;
+  }
+
+  private pick(root: any, ...paths: (string | string[])[]): any {
+    for (const key of paths) {
+      const hits: any[] = [];
+      const visit = (obj: any) => {
+        if (!obj || typeof obj !== 'object') return;
+        if (Array.isArray(key)) {
+          for (const k of key) {
+            if (obj[k] !== undefined) hits.push(obj[k]);
+          }
+        } else if (obj[key] !== undefined) {
+          hits.push(obj[key]);
+        }
+        for (const v of Object.values(obj)) {
+          if (v && typeof v === 'object' && !Array.isArray(v)) visit(v);
+        }
+      };
+      visit(root);
+      for (const h of hits) {
+        if (h !== undefined && h !== null && h !== '') return h;
+      }
+    }
+    return undefined;
+  }
+
+  private normalizeEventPayload(body: any): {
+    titre?: string;
+    description?: string;
+    categorie?: string;
+    lieuNom?: string;
+    adresse?: string;
+    latitude?: string;
+    longitude?: string;
+    dateDebut: string;
+    dateFin: string;
+    heureDebut?: string;
+    heureFin?: string;
+    capacite?: number;
+    prixBillet?: number;
+  } {
+    if (!body || typeof body !== 'object') {
+      throw new BadRequestException('Corps de requête invalide.');
+    }
+
+    const titre = this.string(this.pick(body, 'titre', 'title', ['information', 'title'], ['details', 'title']));
+    const description = this.string(this.pick(body, 'description', 'descriptionText', ['details', 'description']));
+    const categorie = this.string(this.pick(body, 'categorie', 'category', 'categorieEvenement', ['details', 'category']));
+    const lieuNom = this.string(this.pick(body, 'lieuNom', 'location', 'lieu', 'placeName', ['position', 'lieuNom'], ['details', 'lieuNom'], ['details', 'location']));
+    const adresse = this.string(this.pick(body, 'adresse', 'address', 'adress', ['position', 'adresse'], ['details', 'adresse']));
+    const latitude = this.string(this.pick(body, 'latitude', 'lat', ['position', 'latitude'], ['details', 'latitude']));
+    const longitude = this.string(this.pick(body, 'longitude', 'lng', 'lon', ['position', 'longitude'], ['details', 'longitude']));
+
+    const dateDebut = this.string(this.pick(body, 'dateDebut', 'date', 'startDate', 'debut', ['dates', 'debut'], ['dates', 'start'], ['details', 'dateDebut'])) ?? '';
+    const dateFin = this.string(this.pick(body, 'dateFin', 'endDate', 'fin', ['dates', 'fin'], ['dates', 'end'], ['details', 'dateFin'])) ?? '';
+    const heureDebut = this.string(this.pick(body, 'heureDebut', 'startTime', 'heure', ['details', 'heureDebut'], ['details', 'startTime']));
+    const heureFin = this.string(this.pick(body, 'heureFin', 'endTime', ['details', 'heureFin'], ['details', 'endTime']));
+
+    const prixBillet = this.number(this.pick(body, 'prixBillet', 'ticketPrice', 'prix', 'price',
+      ['ticket', 'price'], ['ticket', 'prixBillet'], ['tarif', 'prixBillet'], ['details', 'prixBillet'], ['details', 'ticketPrice']));
+    const capacite = this.number(this.pick(body, 'capacite', 'capacity', 'maxCapacity', 'nombrePlaces',
+      ['capacite', 'places'], ['details', 'capacite'], ['details', 'capacity']));
+
+    return { titre, description, categorie, lieuNom, adresse, latitude, longitude, dateDebut, dateFin, heureDebut, heureFin, capacite, prixBillet };
   }
 }

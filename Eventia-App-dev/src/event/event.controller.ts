@@ -16,8 +16,6 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiParam, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EventService } from './event.service';
-import { CreateEventDto } from './dto/create-event.dto';
-import { UpdateEventDto } from './dto/update-event.dto';
 import { EventStatut } from 'src/common/event-statut.enum';
 import { Role } from 'src/common/role.enum';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -83,12 +81,11 @@ export class EventController {
   @ApiResponse({ status: 401, description: 'Unauthorized.' })
   async create(
     @GetUser() user: AuthenticatedUser,
-    @Body() createEventDto: CreateEventDto,
+    @Body() createEventDto: Record<string, any>,
     @UploadedFile() coverImage?: Express.Multer.File,
   ) {
-    return this.eventService.create(createEventDto, user.id, coverImage);
+    return this.eventService.create(createEventDto as any, user.id, coverImage);
   }
-
   @Get('my-events')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ORGANIZER)
@@ -145,10 +142,10 @@ export class EventController {
   async update(
     @Param('id') id: string,
     @GetUser() user: AuthenticatedUser,
-    @Body() updateEventDto: UpdateEventDto,
+    @Body() updateEventDto: Record<string, any>,
     @UploadedFile() coverImage?: Express.Multer.File,
   ) {
-    return this.eventService.update(id, updateEventDto, user.id, user.role, coverImage);
+    return this.eventService.update(id, updateEventDto as any, user.id, user.role, coverImage);
   }
 
   @Patch(':id/status')
