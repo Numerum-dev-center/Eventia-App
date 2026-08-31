@@ -13,5 +13,6 @@ import { Commission } from 'src/commission/entities/commission.entity';
   imports: [TypeOrmModule.forFeature([Event, Ticket, Order, Payment, User, Commission])],
   controllers: [ReportsController],
   providers: [ReportsService],
+  exports: [ReportsService],
 })
 export class ReportsModule {}

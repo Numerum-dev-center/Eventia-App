@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { TicketCategoryService } from './ticket-category.service';
 import { TicketCategoryController } from './ticket-category.controller';
+import { CategorieTicketAliasController } from './categorie-ticket.controller';
 import { TicketCategory } from './entities/ticket-category.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [TypeOrmModule.forFeature([TicketCategory])],
-  controllers: [TicketCategoryController],
+  controllers: [TicketCategoryController, CategorieTicketAliasController],
   providers: [TicketCategoryService],
   exports: [TicketCategoryService],
 })
