@@ -74,6 +74,12 @@ export class OrganizerController {
     return this.eventService.findMyEvents(user.id);
   }
 
+  @Get('events/:id')
+  @ApiOperation({ summary: 'Get one event owned by the authenticated organizer' })
+  async getMyEvent(@Param('id') id: string, @GetUser() user: AuthenticatedUser) {
+    return this.eventService.findOneForOrganizer(id, user.id);
+  }
+
   @Post('events')
   @HttpCode(HttpStatus.CREATED)
   @coverImageInterceptor
@@ -97,7 +103,7 @@ export class OrganizerController {
   }})
   async createEvent(
     @GetUser() user: AuthenticatedUser,
-    @Body() dto: CreateEventDto,
+    @Body() dto: Record<string, any>,
     @UploadedFile() coverImage?: Express.Multer.File,
   ) {
     return this.eventService.create(dto, user.id, coverImage);
@@ -172,7 +178,7 @@ export class OrganizerController {
   async updateEvent(
     @Param('id') id: string,
     @GetUser() user: AuthenticatedUser,
-    @Body() dto: UpdateEventDto,
+    @Body() dto: Record<string, any>,
     @UploadedFile() coverImage?: Express.Multer.File,
   ) {
     return this.eventService.update(id, dto, user.id, user.role, coverImage);

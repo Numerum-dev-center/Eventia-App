@@ -27,7 +27,7 @@ export class EventService {
   private readonly logger = new Logger(EventService.name);
 
   async create(
-    createEventDto: CreateEventDto,
+    createEventDto: Record<string, any>,
     userId: string,
     coverImageFile?: Express.Multer.File,
   ): Promise<Event> {
@@ -50,9 +50,9 @@ export class EventService {
       const p = this.normalizeEventPayload(createEventDto as any);
 
       const startDate = this.parseDateTime(p.dateDebut, true, p.heureDebut);
-      const endDate = this.parseDateTime(p.dateFin, false, p.heureFin);
+      const endDate = this.parseDateTime(p.dateFin || p.dateDebut, false, p.heureFin);
 
-      if (endDate <= startDate) {
+      if (endDate < startDate) {
         throw new BadRequestException(
           'La date de fin doit être postérieure à la date de début.',
         );
@@ -218,6 +218,23 @@ export class EventService {
     });
   }
 
+  async findOneForOrganizer(id: string, userId: string): Promise<Event> {
+    const profile = await this.organizerProfileRepository.findOne({
+      where: { user: { id: userId } },
+    });
+    if (!profile) {
+      throw new NotFoundException('No organizer profile found for this user.');
+    }
+    const event = await this.eventRepository.findOne({
+      where: { id, organizerProfile: { id: profile.id } },
+      relations: { ticketsCategories: true, media: true },
+    });
+    if (!event) {
+      throw new NotFoundException(`Event #${id} not found for this organizer.`);
+    }
+    return event;
+  }
+
   async findMyEvents(userId: string): Promise<Event[]> {
     const profile = await this.organizerProfileRepository.findOne({
       where: { user: { id: userId } },
@@ -230,7 +247,7 @@ export class EventService {
 
   async update(
     id: string,
-    updateEventDto: UpdateEventDto,
+    updateEventDto: Record<string, any>,
     userId: string,
     userRole: string,
     coverImageFile?: Express.Multer.File,
@@ -253,11 +270,11 @@ export class EventService {
     if (p.dateDebut || p.heureDebut) {
       event.startDate = this.parseDateTime(p.dateDebut ?? '', true, p.heureDebut);
     }
-    if (p.dateFin || p.heureFin) {
-      event.endDate = this.parseDateTime(p.dateFin ?? '', false, p.heureFin);
+    if (p.dateFin || p.heureFin || p.dateDebut) {
+      event.endDate = this.parseDateTime(p.dateFin || p.dateDebut || '', false, p.heureFin);
     }
 
-    if (event.endDate && event.startDate && event.endDate <= event.startDate) {
+    if (event.endDate && event.startDate && event.endDate < event.startDate) {
       throw new BadRequestException('End time must be after start time.');
     }
 
@@ -354,6 +371,11 @@ export class EventService {
     const d = (date || '').trim();
     if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
       return new Date(`${d}T${t}:00.000Z`);
+    }
+    const ddmm = d.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (ddmm) {
+      const [, dd, mm, yyyy] = ddmm;
+      return new Date(`${yyyy}-${mm}-${dd}T${t}:00.000Z`);
     }
     const dt = new Date(d);
     if (isNaN(dt.getTime())) {
