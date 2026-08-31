@@ -47,6 +47,24 @@ export class MailService {
       throw new InternalServerErrorException("Unable to send activation email");
     }
   }
+
+  async sendEventRejectedEmail(email: string, eventTitle: string, reason: string): Promise<void> {
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: `Événement "${eventTitle}" rejeté`,
+        html: `<p>Bonjour,</p>
+<p>L'événement <strong>${eventTitle}</strong> a été rejeté par l'administrateur.</p>
+<p>Motif : <strong>${reason || 'Aucun motif fourni'}</strong></p>
+<p>Vous pouvez modifier l'événement et le soumettre à nouveau pour validation.</p>
+<p>Cordialement,<br>L'équipe Eventia</p>`,
+      });
+      this.logger.log(`Event rejection email sent successfully to ${email}`);
+    } catch (error) {
+      this.logger.error(`Failed to send event rejection email to ${email}:`, error);
+    }
+  }
+
     
 
 }

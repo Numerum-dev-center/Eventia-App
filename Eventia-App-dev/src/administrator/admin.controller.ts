@@ -36,8 +36,12 @@ export class AdminController {
   @Patch('events/:id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)
-  moderate(@Param('id') id: string, @Body('status') statut: EventStatut) {
-    return this.administratorService.moderateEvent(id, statut);
+  moderate(
+    @Param('id') id: string,
+    @Body('status') statut: EventStatut,
+    @Body('reason') reason?: string,
+  ) {
+    return this.administratorService.moderateEvent(id, statut, reason);
   }
 
   @Get('reports')

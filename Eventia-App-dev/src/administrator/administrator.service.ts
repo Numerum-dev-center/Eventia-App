@@ -13,6 +13,7 @@ import { Payment } from 'src/payment/entities/payment.entity';
 import { EventStatut } from 'src/common/event-statut.enum';
 import { PaymentStatut } from 'src/common/payment-statut.enum';
 import { Role } from 'src/common/role.enum';
+import { MailService } from 'src/mail/mail.service';
 
 @Injectable()
 export class AdministratorService {
@@ -25,6 +26,7 @@ export class AdministratorService {
     private orderRepository: Repository<Order>,
     @InjectRepository(Payment)
     private paymentRepository: Repository<Payment>,
+    private readonly mailService: MailService,
   ) {}
 
   private readonly logger = new Logger(AdministratorService.name);
@@ -92,6 +94,7 @@ export class AdministratorService {
   async moderateEvent(eventId: string, statut: EventStatut, reason?: string): Promise<Event> {
     const event = await this.eventRepository.findOne({
       where: { id: eventId },
+      relations: { organizerProfile: { user: true } },
     });
     if (!event) {
       throw new NotFoundException(`Événement #${eventId} non trouvé`);
@@ -102,7 +105,19 @@ export class AdministratorService {
     } else {
       (event as any).rejectionReason = null;
     }
-    return await this.eventRepository.save(event);
+    const saved = await this.eventRepository.save(event);
+
+    if (statut === EventStatut.REJECTED && saved.organizerProfile?.user) {
+      this.mailService
+        .sendEventRejectedEmail(
+          saved.organizerProfile.user.email,
+          saved.title,
+          reason || '',
+        )
+        .catch((error) => this.logger.warn(`Rejection email failed: ${error.message}`));
+    }
+
+    return saved;
   }
 
   async searchUsers(query: { search?: string; role?: string; isActive?: string; page?: string; limit?: string }) {

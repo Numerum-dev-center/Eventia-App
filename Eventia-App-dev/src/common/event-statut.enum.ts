@@ -3,6 +3,7 @@ export enum EventStatut {
   PENDING_REVIEW = 'PendingReview',
   PUBLISHED = 'Published',
   SUSPENDED = 'Suspended',
+  REJECTED = 'Rejected',
   CANCELED = 'Cancelled',
   FINISHED = 'Finished',
   ARCHIVED = 'Archived',

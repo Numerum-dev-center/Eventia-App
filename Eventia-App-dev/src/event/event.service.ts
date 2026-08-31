@@ -81,6 +81,7 @@ export class EventService {
         endDate,
         bannerImage,
         maxCapacity: p.capacite,
+        statut: EventStatut.PENDING_REVIEW,
         organizerProfile: { id: profile.id },
       } as DeepPartial<Event>);
 
@@ -294,10 +295,11 @@ export class EventService {
     const event = await this.findOne(id);
 
     const allowedTransitions: Record<EventStatut, EventStatut[]> = {
-      [EventStatut.DRAFT]: [EventStatut.PENDING_REVIEW, EventStatut.PUBLISHED],
-      [EventStatut.PENDING_REVIEW]: [EventStatut.PUBLISHED, EventStatut.SUSPENDED, EventStatut.DRAFT],
+      [EventStatut.DRAFT]: [EventStatut.PENDING_REVIEW, EventStatut.PUBLISHED, EventStatut.REJECTED],
+      [EventStatut.PENDING_REVIEW]: [EventStatut.PUBLISHED, EventStatut.SUSPENDED, EventStatut.DRAFT, EventStatut.REJECTED],
       [EventStatut.PUBLISHED]: [EventStatut.SUSPENDED, EventStatut.CANCELED, EventStatut.FINISHED],
       [EventStatut.SUSPENDED]: [EventStatut.PUBLISHED, EventStatut.CANCELED],
+      [EventStatut.REJECTED]: [EventStatut.DRAFT, EventStatut.PENDING_REVIEW],
       [EventStatut.CANCELED]: [EventStatut.ARCHIVED],
       [EventStatut.FINISHED]: [EventStatut.ARCHIVED],
       [EventStatut.ARCHIVED]: [],
