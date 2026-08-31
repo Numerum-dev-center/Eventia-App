@@ -122,12 +122,10 @@ async requestActivationToken(userId: string) {
   const backendUrl = this.configService.get<string>('BACKEND_URL') || 'https://eventia-app-c6b5.onrender.com';
   const activationLink = `${backendUrl}/auth/activate?token=${token}`;
 
-  // Envoyer l'e-mail avec le lien (non bloquant si Brevo non configuré)
-  try {
-    await this.mailService.sendActivationEmail(user.email, activationLink);
-  } catch (error) {
-    this.logger.warn(`Could not send activation email to ${user.email}: ${error.message}. Token: ${token}`);
-  }
+  // Envoyer l'e-mail avec le lien (non bloquant : ne retarde pas la réponse API)
+  this.mailService.sendActivationEmail(user.email, activationLink)
+    .then(() => this.logger.log(`Activation email sent to ${user.email}`))
+    .catch((error) => this.logger.warn(`Could not send activation email to ${user.email}: ${error.message}. Token: ${token}`));
 }
 
 // --- VALIDATION DU COMPTE VIA LE TOKEN ---
