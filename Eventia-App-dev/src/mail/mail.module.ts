@@ -22,7 +22,7 @@ import { join } from 'path';
           },
         },
         defaults: {
-          from: config.get('MAIL_FROM'),
+          from: `"Eventia" <${config.get('MAIL_FROM')}>`,
         },
         template: {
           dir: join(__dirname, 'templates'),

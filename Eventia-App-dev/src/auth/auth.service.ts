@@ -95,6 +95,11 @@ private determineRole(email: string): Role {
     const isPasswordValid = await comparePassword(loginDto.password, user.password);
     if (!isPasswordValid) throw new UnauthorizedException('Invalid email or password. The password is incorrect.');
 
+    // Bloquer les comptes actifs. Un compte inactif = inscription non activée via email
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account not activated. Please check your email for the activation link.');
+    }
+
     // 2. Typage explicite du payload
     const payload: JwtPayload = { email: user.email, sub: user.id };
 
