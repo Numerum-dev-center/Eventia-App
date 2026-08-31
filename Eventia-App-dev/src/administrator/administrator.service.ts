@@ -42,17 +42,25 @@ export class AdministratorService {
   }
 
   async getAllUsers(): Promise<User[]> {
-    return await this.userRepository.find({
+    const users = await this.userRepository.find({
       order: { createdAt: 'DESC' },
       relations: { organizerProfile: true },
+    });
+    return users.map((u) => {
+      const { password, activationToken, twoFASecretCode, resetPasswordCode, ...safe } = u as any;
+      return safe;
     });
   }
 
   async getUsersByRole(role: Role): Promise<User[]> {
-    return await this.userRepository.find({
+    const users = await this.userRepository.find({
       where: { role },
       order: { createdAt: 'DESC' },
       relations: { organizerProfile: true },
+    });
+    return users.map((u) => {
+      const { password, activationToken, twoFASecretCode, resetPasswordCode, ...safe } = u as any;
+      return safe;
     });
   }
 
@@ -143,7 +151,11 @@ export class AdministratorService {
     qb.skip((page - 1) * limit).take(limit);
 
     const [users, total] = await qb.getManyAndCount();
-    return { users, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+    const sanitized = users.map((u) => {
+      const { password, activationToken, twoFASecretCode, resetPasswordCode, ...safe } = u as any;
+      return safe;
+    });
+    return { users: sanitized, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
   }
 
   async updateUserRole(userId: string, role: Role): Promise<User> {

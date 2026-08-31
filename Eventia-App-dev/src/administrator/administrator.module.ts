@@ -10,6 +10,7 @@ import { Payment } from 'src/payment/entities/payment.entity';
 import { ReportsModule } from 'src/reports/reports.module';
 import { CommissionModule } from 'src/commission/commission.module';
 import { MailModule } from 'src/mail/mail.module';
+import { OrganizerProfileModule } from 'src/organizer-profile/organizer-profile.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { MailModule } from 'src/mail/mail.module';
     ReportsModule,
     CommissionModule,
     MailModule,
+    OrganizerProfileModule,
   ],
   controllers: [AdministratorController, AdminController],
   providers: [AdministratorService],
