@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Event } from './entities/event.entity';
 import { EventController } from './event.controller';
+import { EventFrenchAliasController } from './event-french-alias.controller';
 import { EventService } from './event.service';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
@@ -11,7 +12,7 @@ import { EventMedia } from 'src/media/entities/event-media.entity';
   imports: [
     TypeOrmModule.forFeature([Event, OrganizerProfile, TicketCategory, EventMedia]), 
   ],
-  controllers: [EventController],
+  controllers: [EventController, EventFrenchAliasController],
   providers: [EventService],
   exports: [EventService],
 })
