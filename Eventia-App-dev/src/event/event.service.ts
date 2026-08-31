@@ -5,6 +5,7 @@ import { Event } from './entities/event.entity';
 import { CreateEventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventStatut } from 'src/common/event-statut.enum';
+import { StatutVerification } from 'src/common/profile-organizer-validation-statut.enum';
 import { Role } from 'src/common/role.enum';
 import { OrganizerProfile } from 'src/organizer-profile/entities/organizer-profile.entity';
 import { TicketCategory } from 'src/ticket-category/entities/ticket-category.entity';
@@ -35,18 +36,39 @@ export class EventService {
       });
       if (!profile) {
         throw new BadRequestException(
-          'No organizer profile found for this user. Please create your organizer profile first.',
+          'Aucun profil organisateur trouvé pour cet utilisateur. Veuillez d’abord créer votre profil organisateur.',
         );
       }
 
-      const { date, startTime, endTime, capacity, ticketPrice, ...rest } = createEventDto;
+      if (profile.verificationStatut !== StatutVerification.APPROVED) {
+        throw new ForbiddenException(
+          'Votre profil organisateur doit être approuvé par un administrateur avant de pouvoir créer un événement.',
+        );
+      }
 
-      const startDate = this.combineDateAndTime(date, startTime);
-      const endDate = this.combineDateAndTime(date, endTime);
+      const {
+        titre,
+        description,
+        categorie,
+        lieuNom,
+        adresse,
+        latitude,
+        longitude,
+        dateDebut,
+        dateFin,
+        heureDebut,
+        heureFin,
+        capacite,
+        prixBillet,
+        ...rest
+      } = createEventDto;
+
+      const startDate = this.combineDateAndTime(dateDebut, heureDebut ?? '00:00');
+      const endDate = this.combineDateAndTime(dateFin, heureFin ?? '23:59');
 
       if (endDate <= startDate) {
         throw new BadRequestException(
-          'End time must be after start time. If the event ends the next day, the backend will still accept it as long as the start time is before the end time.',
+          'La date de fin doit être postérieure à la date de début.',
         );
       }
 
@@ -60,16 +82,19 @@ export class EventService {
       }
 
       const event = this.eventRepository.create({
-        title: rest.title?.trim(),
-        description: rest.description?.trim(),
-        category: rest.category,
-        location: rest.location?.trim(),
-        placeName: rest.location?.trim(),
-        ticketPrice: ticketPrice,
+        title: titre?.trim(),
+        description: description?.trim(),
+        category: categorie,
+        location: lieuNom?.trim(),
+        placeName: lieuNom?.trim(),
+        adress: adresse?.trim(),
+        latitude,
+        longitude,
+        ticketPrice: prixBillet,
         startDate,
         endDate,
         bannerImage,
-        maxCapacity: capacity,
+        maxCapacity: capacite,
         organizerProfile: { id: profile.id },
       });
 
@@ -236,13 +261,32 @@ export class EventService {
       }
     }
 
-    const { date, startTime, endTime, capacity, ticketPrice, ...rest } = updateEventDto;
+    const {
+      titre,
+      description,
+      categorie,
+      lieuNom,
+      adresse,
+      latitude,
+      longitude,
+      dateDebut,
+      dateFin,
+      heureDebut,
+      heureFin,
+      capacite,
+      prixBillet,
+      ...rest
+    } = updateEventDto;
 
-    if (date && startTime) {
-      event.startDate = this.combineDateAndTime(date, startTime);
+    if (dateDebut && heureDebut) {
+      event.startDate = this.combineDateAndTime(dateDebut, heureDebut);
+    } else if (dateDebut) {
+      event.startDate = this.combineDateAndTime(dateDebut, '00:00');
     }
-    if (date && endTime) {
-      event.endDate = this.combineDateAndTime(date, endTime);
+    if (dateFin && heureFin) {
+      event.endDate = this.combineDateAndTime(dateFin, heureFin);
+    } else if (dateFin) {
+      event.endDate = this.combineDateAndTime(dateFin, '23:59');
     }
 
     if (event.endDate && event.startDate && event.endDate <= event.startDate) {
@@ -260,15 +304,18 @@ export class EventService {
       );
     }
 
-    if (rest.title !== undefined) event.title = rest.title?.trim();
-    if (rest.description !== undefined) event.description = rest.description?.trim();
-    if (rest.category !== undefined) event.category = rest.category;
-    if (rest.location !== undefined) {
-      event.location = rest.location?.trim();
-      event.placeName = rest.location?.trim();
+    if (titre !== undefined) event.title = titre?.trim();
+    if (description !== undefined) event.description = description?.trim();
+    if (categorie !== undefined) event.category = categorie;
+    if (lieuNom !== undefined) {
+      event.location = lieuNom?.trim();
+      event.placeName = lieuNom?.trim();
     }
-    if (ticketPrice !== undefined) event.ticketPrice = ticketPrice;
-    if (capacity !== undefined) event.maxCapacity = capacity;
+    if (adresse !== undefined) event.adress = adresse?.trim();
+    if (latitude !== undefined) event.latitude = latitude;
+    if (longitude !== undefined) event.longitude = longitude;
+    if (prixBillet !== undefined) event.ticketPrice = prixBillet;
+    if (capacite !== undefined) event.maxCapacity = capacite;
 
     return await this.eventRepository.save(event);
   }
