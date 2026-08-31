@@ -12,6 +12,7 @@ export enum NotificationType {
   PURCHASE_CONFIRMATION = 'purchase_confirmation',
   ACCOUNT_ACTIVATED = 'account_activated',
   EVENT_REMINDER = 'event_reminder',
+  EVENT_PUBLISHED = 'event_published',
 }
 
 @Entity('notifications')

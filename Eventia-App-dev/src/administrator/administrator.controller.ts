@@ -47,6 +47,13 @@ export class AdministratorController {
     return this.administratorService.updateUserRole(id, role);
   }
 
+  @Get('users/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.ADMIN)
+  getUserById(@Param('id') id: string) {
+    return this.administratorService.getUserById(id);
+  }
+
   @Patch('users/:id/toggle-active')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.ADMIN)

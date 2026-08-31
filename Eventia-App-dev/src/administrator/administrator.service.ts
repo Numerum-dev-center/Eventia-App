@@ -29,6 +29,16 @@ export class AdministratorService {
 
   private readonly logger = new Logger(AdministratorService.name);
 
+  async getUserById(id: string) {
+    const user = await this.userRepository.findOne({
+      where: { id },
+      relations: { organizerProfile: true },
+    });
+    if (!user) throw new NotFoundException(`User #${id} not found`);
+    const { password, activationToken, twoFASecretCode, resetPasswordCode, ...safe } = user as any;
+    return safe;
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await this.userRepository.find({
       order: { createdAt: 'DESC' },
