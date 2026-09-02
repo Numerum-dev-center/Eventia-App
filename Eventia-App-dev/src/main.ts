@@ -16,6 +16,17 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.use(cookieParser());
+
+  // Normalise les doubles slashes (ex: //auth/google -> /auth/google)
+  // Le frontend construit parfois l'URL comme BACKEND_URL + '/auth/google'
+  // alors que BACKEND_URL se termine déjà par '/', produisant //auth/google
+  // qui renvoyait un 404. Ce middleware réécrit le chemin pour l'ignorer.
+  app.use((req, res, next) => {
+    if (req.url.startsWith('//')) {
+      req.url = req.url.replace(/^\/+/, '/');
+    }
+    next();
+  });
   
   app.enableCors({
     origin: true,
