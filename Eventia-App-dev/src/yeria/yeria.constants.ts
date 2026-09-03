@@ -1,6 +1,9 @@
 export const YERIA_APP = 'YERIA_APP';
 
 export const YERIA_VIEW_ID = {
+  MENU: 'menu',
+  ABOUT: 'about',
+  MY_TICKETS: 'my-tickets',
   SCAN_TICKET: 'scan-ticket',
   TICKET_WALLET: 'ticket-wallet',
   TICKET_DETAILS: 'ticket-details',

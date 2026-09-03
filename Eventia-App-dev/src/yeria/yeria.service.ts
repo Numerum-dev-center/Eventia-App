@@ -86,6 +86,59 @@ export class YeriaService {
     return this.serveScanView();
   }
 
+  /**
+   * Menu racine du participant (ActionListView).
+   * Évènements / Mes billets / À-propos.
+   */
+  serveMenu(): SignedEnvelope {
+    const view = new ActionListView(YERIA_VIEW_ID.MENU, 'Mon espace')
+      .setIntro('Bienvenue sur Eventia. Retrouvez vos billets et découvrez les prochains événements.')
+      .setTitle('Mon espace');
+
+    view.addAction(
+      'tickets',
+      'Mes billets',
+      'Consultez vos billets achetés et présentez leur QR code.',
+      undefined,
+      false,
+      { href: YeriaLink.component(this.yeriaAppId, `/views/${YERIA_VIEW_ID.MY_TICKETS}`) },
+    );
+
+    view.addAction(
+      'events',
+      'Évènements',
+      'Découvrez les prochains événements Eventia.',
+      undefined,
+      false,
+      { href: YeriaLink.component(this.yeriaAppId, '/views/events') },
+    );
+
+    view.addAction(
+      'about',
+      'À-propos',
+      'En savoir plus sur Eventia.',
+      undefined,
+      false,
+      { href: YeriaLink.component(this.yeriaAppId, `/views/${YERIA_VIEW_ID.ABOUT}`) },
+    );
+
+    return this.app.serve(view);
+  }
+
+  /** Page « À-propos » de l'application (ReaderView). */
+  serveAbout(): SignedEnvelope {
+    const view = new ReaderView(
+      YERIA_VIEW_ID.ABOUT,
+      'À-propos d\u2019Eventia',
+    )
+      .setIntro('Eventia — la billetterie événementielle.')
+      .addParagraph(
+        'Eventia vous permet de découvrir des événements, réserver vos billets et les présenter à l\u2019entrée grâce à un QR code.',
+      );
+
+    return this.app.serve(view);
+  }
+
   /** Wallet participant : QR code du billet à présenter à l'entrée. */
   async serveTicketWalletQR(code: string): Promise<SignedEnvelope> {
     const ticket = await this.findTicketByCode(code);
@@ -105,7 +158,8 @@ export class YeriaService {
         qrDataUrl,
         `Billet ${ticket.ticketCategory?.name ?? ''}`,
         'Présentez ce QR code à l\u2019entrée pour accéder à l\u2019événement.',
-      );
+      )
+      .submitButton('Partager', 'POST');
 
     return this.app.serve(view);
   }
@@ -159,13 +213,6 @@ export class YeriaService {
       relations: { ticketsCategories: true },
     });
 
-    if (events.length === 0) {
-      return this.buildInfoMessage(
-        'Aucun événement',
-        'Aucun événement disponible pour le moment. Revenez bientôt !',
-      );
-    }
-
     const view = new ActionListView(
       YERIA_VIEW_ID.EVENT_LIST,
       'Événements',
@@ -199,13 +246,6 @@ export class YeriaService {
       order: { startDate: 'ASC' },
       relations: { ticketsCategories: true },
     });
-
-    if (events.length === 0) {
-      return this.buildInfoMessage(
-        'Aucun résultat',
-        'Aucun événement ne correspond à ces critères.',
-      );
-    }
 
     const view = new ActionListView(
       YERIA_VIEW_ID.EVENT_LIST,
@@ -557,6 +597,91 @@ export class YeriaService {
     return this.app.serve(view);
   }
 
+  /**
+   * Portefeuille « Mes billets » du participant (ActionListView).
+   * L'utilisateur est identifié uniquement par son jeton Yeria (Bearer token) :
+   * `sub` -> User.yeriaUserId -> ses commandes -> ses billets.
+   * Chaque billet mène vers sa vue QR.
+   */
+  async serveMyTickets(yeriaUser?: YeriaTokenClaims): Promise<SignedEnvelope> {
+    const client = await this.findClientByYeriaUser(yeriaUser);
+
+    if (!client) {
+      return this.buildResultMessage(
+        'Connexion requise',
+        'Impossible d\u2019identifier votre compte. Connectez-vous pour retrouver vos billets.',
+        'warning',
+      );
+    }
+
+    const orders = await this.orderRepository.find({
+      where: { client: { id: client.id } },
+      relations: {
+        ticket: { ticketCategory: { event: true } },
+      },
+      order: { orderDate: 'DESC' },
+    });
+
+    const tickets = orders
+      .flatMap((o) => o.ticket ?? [])
+      .sort((a, b) => {
+        const da = a.ticketCategory?.event?.startDate?.getTime() ?? 0;
+        const db = b.ticketCategory?.event?.startDate?.getTime() ?? 0;
+        return db - da;
+      });
+
+    const view = new ActionListView(
+      YERIA_VIEW_ID.MY_TICKETS,
+      'Mes billets',
+    )
+      .setIntro('Vos billets Eventia. Touchez un billet pour afficher son QR code.')
+      .setTitle('Mes billets');
+
+    if (tickets.length === 0) {
+      view.addAction(
+        'no-tickets',
+        'Aucun billet',
+        'Vous n\u2019avez pas encore de billet. Découvrez les événements.',
+        undefined,
+        false,
+        { href: YeriaLink.component(this.yeriaAppId, '/views/events') },
+      );
+      return this.app.serve(view);
+    }
+
+    for (const ticket of tickets) {
+      const event = ticket.ticketCategory?.event;
+      const desc = [
+        event?.title ?? 'Événement',
+        ticket.ticketCategory?.name ?? '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+
+      view.addAction(
+        ticket.id,
+        ticket.ticketCategory?.name ?? 'Billet',
+        desc,
+        event?.bannerImage ?? undefined,
+        false,
+        { href: YeriaLink.component(this.yeriaAppId, `/views/tickets/${ticket.uniqueCodeCrypto}`) },
+      );
+    }
+
+    return this.app.serve(view);
+  }
+
+  /** Retrouve un participant (User Eventia) à partir du jeton Yeria. */
+  private async findClientByYeriaUser(
+    yeriaUser?: YeriaTokenClaims,
+  ): Promise<User | null> {
+    const sub = yeriaUser?.sub;
+    if (!sub) {
+      return null;
+    }
+    return this.userRepository.findOne({ where: { yeriaUserId: sub } });
+  }
+
   // ---------------------------------------------------------------------------
   // SCAN / VALIDATION (POST /scan-ticket depuis la vue QRScanView)
   // ---------------------------------------------------------------------------
@@ -717,7 +842,7 @@ export class YeriaService {
 
     if (!event) {
       this.logger.warn(`Événement introuvable : ${eventId}`);
-      throw new NotFoundException('Event not found.');
+      throw new NotFoundException('Événement introuvable');
     }
 
     return event;
@@ -733,7 +858,7 @@ export class YeriaService {
         where: { id: userId },
       });
       if (!user) {
-        throw new NotFoundException('User not found. Unable to complete booking.');
+        throw new NotFoundException('Utilisateur introuvable');
       }
       return user;
     }
@@ -801,15 +926,6 @@ export class YeriaService {
     ).catch(() => {
       this.logger.warn('Notification de réservation non délivrée');
     });
-  }
-
-  private buildInfoMessage(title: string, body: string): SignedEnvelope {
-    const view = new MessageView(YERIA_VIEW_ID.ERROR, title)
-      .setBody(body)
-      .setSeverity('info')
-      .setDismissible(true);
-
-    return this.app.serve(view);
   }
 
   private buildResultMessage(

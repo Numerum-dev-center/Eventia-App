@@ -27,13 +27,13 @@ export class YeriaController {
 
   @Get('views/scan')
   @ApiOperation({
-    summary: 'Scan view for access control (Signed QRScanView)',
+    summary: 'Vue de scan pour le contrôle d\u2019accès (QRScanView signée)',
     description:
-      "Returns a signed envelope {payload, signature}. The agent scans the QR -> POST /scan-ticket with { qrData }.",
+      "Retourne une enveloppe signée {payload, signature}. L'agent scanne le QR -> POST /scan-ticket avec { qrData }.",
   })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (QRScanView)',
+    description: 'Enveloppe Yeria signée (QRScanView)',
   })
   serveScanView(): SignedEnvelope {
     return this.yeriaService.serveScanView();
@@ -41,35 +41,76 @@ export class YeriaController {
 
   @Get('views/tickets/:code')
   @ApiOperation({
-    summary: 'Participant wallet: Ticket QR code (Signed QRDisplayView)',
+    summary: 'Wallet participant : QR code du billet (QRDisplayView signée)',
   })
-  @ApiParam({ name: 'code', description: 'Unique ticket code (uniqueCodeCrypto)' })
-  @ApiResponse({ status: 200, description: 'Signed Yeria envelope (QRDisplayView)' })
-  @ApiResponse({ status: 404, description: 'Ticket not found' })
+  @ApiParam({ name: 'code', description: 'Code unique du billet (uniqueCodeCrypto)' })
+  @ApiResponse({ status: 200, description: 'Enveloppe Yeria signée (QRDisplayView)' })
+  @ApiResponse({ status: 404, description: 'Billet introuvable' })
   serveTicketWalletQR(@Param('code') code: string): Promise<SignedEnvelope> {
     return this.yeriaService.serveTicketWalletQR(code);
   }
 
   @Get('views/tickets/:code/details')
   @ApiOperation({
-    summary: 'Ticket details (Signed ReaderView)',
+    summary: 'Détails du billet (ReaderView signée)',
   })
-  @ApiParam({ name: 'code', description: 'Unique ticket code (uniqueCodeCrypto)' })
-  @ApiResponse({ status: 200, description: 'Signed Yeria envelope (ReaderView)' })
-  @ApiResponse({ status: 404, description: 'Ticket not found' })
+  @ApiParam({ name: 'code', description: 'Code unique du billet (uniqueCodeCrypto)' })
+  @ApiResponse({ status: 200, description: 'Enveloppe Yeria signée (ReaderView)' })
+  @ApiResponse({ status: 404, description: 'Billet introuvable' })
   serveTicketDetails(@Param('code') code: string): Promise<SignedEnvelope> {
     return this.yeriaService.serveTicketDetails(code);
   }
 
-  @Get('views/events')
+  @Get('views/menu')
   @ApiOperation({
-    summary: 'List of published events (Signed ActionListView)',
+    summary: 'Menu racine du participant (ActionListView signée)',
     description:
-      "Consumed by the Yeria application. Each action links to the event details page.",
+      "Évènements / Mes billets / À-propos. Consommée par l'application Yeria.",
   })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (ActionListView)',
+    description: 'Enveloppe Yeria signée (ActionListView)',
+  })
+  serveMenu(): SignedEnvelope {
+    return this.yeriaService.serveMenu();
+  }
+
+  @Get('views/about')
+  @ApiOperation({
+    summary: 'Page « À-propos » (ReaderView signée)',
+  })
+  @ApiResponse({ status: 200, description: 'Enveloppe Yeria signée (ReaderView)' })
+  serveAbout(): SignedEnvelope {
+    return this.yeriaService.serveAbout();
+  }
+
+  @Get('views/my-tickets')
+  @UseGuards(YeriaAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Portefeuille « Mes billets » du participant (ActionListView signée)',
+    description:
+      'Identifie le participant via son jeton Yeria (Bearer). Liste ses billets, chaque action mène vers la vue QR du billet.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Enveloppe Yeria signée (ActionListView)',
+  })
+  serveMyTickets(
+    @GetYeriaUser() yeriaUser?: YeriaTokenClaims,
+  ): Promise<SignedEnvelope> {
+    return this.yeriaService.serveMyTickets(yeriaUser);
+  }
+
+  @Get('views/events')
+  @ApiOperation({
+    summary: 'Liste des événements publiés (ActionListView signée)',
+    description:
+      "Consommée par l'application Yeria. Chaque action renvoie vers la fiche de l'événement.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Enveloppe Yeria signée (ActionListView)',
   })
   serveEventList(): Promise<SignedEnvelope> {
     return this.yeriaService.serveEventList();
@@ -77,12 +118,12 @@ export class YeriaController {
 
   @Get('views/events/filter')
   @ApiOperation({
-    summary: 'Event filter form by category (Signed FormView)',
-    description: 'The submit POST sends to /events/filter.',
+    summary: 'Formulaire de filtre des événements par catégorie (FormView signée)',
+    description: 'Le submit POST renvoie vers /events/filter.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (FormView)',
+    description: 'Enveloppe Yeria signée (FormView)',
   })
   serveEventFilter(): Promise<SignedEnvelope> {
     return this.yeriaService.serveEventFilter();
@@ -90,51 +131,51 @@ export class YeriaController {
 
   @Get('views/events/:id')
   @ApiOperation({
-    summary: 'Detailed event page (Signed CardView)',
+    summary: 'Fiche détaillée d\u2019un événement (CardView signée)',
   })
-  @ApiParam({ name: 'id', description: 'Event ID' })
+  @ApiParam({ name: 'id', description: 'Identifiant de l\u2019événement' })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (CardView)',
+    description: 'Enveloppe Yeria signée (CardView)',
   })
-  @ApiResponse({ status: 404, description: 'Event not found' })
+  @ApiResponse({ status: 404, description: 'Événement introuvable' })
   serveEventDetails(@Param('id') id: string): Promise<SignedEnvelope> {
     return this.yeriaService.serveEventDetails(id);
   }
 
   @Get('views/events/:id/map')
   @ApiOperation({
-    summary: 'Event location on map (Signed MapView)',
+    summary: 'Position de l\u2019événement sur une carte (MapView signée)',
   })
-  @ApiParam({ name: 'id', description: 'Event ID' })
-  @ApiResponse({ status: 200, description: 'Signed Yeria envelope (MapView)' })
-  @ApiResponse({ status: 404, description: 'Event not found' })
-  @ApiResponse({ status: 400, description: 'No geographic coordinates' })
+  @ApiParam({ name: 'id', description: 'Identifiant de l\u2019événement' })
+  @ApiResponse({ status: 200, description: 'Enveloppe Yeria signée (MapView)' })
+  @ApiResponse({ status: 404, description: 'Événement introuvable' })
+  @ApiResponse({ status: 400, description: 'Pas de coordonnées géographiques' })
   serveEventMap(@Param('id') id: string): Promise<SignedEnvelope> {
     return this.yeriaService.serveEventMap(id);
   }
 
   @Get('views/events/:id/book')
   @ApiOperation({
-    summary: 'Booking form (Signed FormView)',
-    description: 'The submit POST sends to /event-booking.',
+    summary: 'Formulaire de réservation (FormView signée)',
+    description: 'Le submit POST renvoie vers /event-booking.',
   })
-  @ApiParam({ name: 'id', description: 'Event ID' })
+  @ApiParam({ name: 'id', description: 'Identifiant de l\u2019événement' })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (FormView)',
+    description: 'Enveloppe Yeria signée (FormView)',
   })
-  @ApiResponse({ status: 404, description: 'Event not found' })
+  @ApiResponse({ status: 404, description: 'Événement introuvable' })
   serveBookingForm(@Param('id') id: string): Promise<SignedEnvelope> {
     return this.yeriaService.serveBookingForm(id);
   }
 
   @Get('views/orders/:userId')
   @ApiOperation({
-    summary: 'Participant order history (Signed ReaderView)',
+    summary: 'Historique des commandes d\u2019un participant (ReaderView signée)',
   })
-  @ApiParam({ name: 'userId', description: 'Eventia user ID' })
-  @ApiResponse({ status: 200, description: 'Signed Yeria envelope (ReaderView)' })
+  @ApiParam({ name: 'userId', description: 'Identifiant Eventia de l\u2019utilisateur' })
+  @ApiResponse({ status: 200, description: 'Enveloppe Yeria signée (ReaderView)' })
   serveOrderHistory(@Param('userId') userId: string): Promise<SignedEnvelope> {
     return this.yeriaService.serveOrderHistory(userId);
   }
@@ -147,12 +188,12 @@ export class YeriaController {
   @UseGuards(YeriaAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Validates a scanned ticket (returns a signed MessageView)',
+    summary: 'Valide un billet scanné (retourne une MessageView signée)',
   })
   @ApiBody({ type: ScanTicketDto })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (MessageView: access granted/denied)',
+    description: 'Enveloppe Yeria signée (MessageView : accès autorisé/refusé)',
   })
   validateScannedTicket(
     @Body() dto: ScanTicketDto,
@@ -163,11 +204,11 @@ export class YeriaController {
 
   @Post('scan-result')
   @ApiOperation({
-    summary: 'Return to scan view ("Scan another ticket")',
+    summary: 'Retour à la vue de scan (« Scanner un autre billet »)',
     description:
-      "Consumed by the action button of the result MessageView.",
+      "Consommé par le bouton d'action de la MessageView de résultat.",
   })
-  @ApiResponse({ status: 200, description: 'Signed Yeria envelope (QRScanView)' })
+  @ApiResponse({ status: 200, description: 'Enveloppe Yeria signée (QRScanView)' })
   scanAgain(): SignedEnvelope {
     return this.yeriaService.serveScanViewAgain();
   }
@@ -176,14 +217,14 @@ export class YeriaController {
   @UseGuards(YeriaAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Applies category filter (returns a signed ActionListView)',
+    summary: 'Applique le filtre de catégorie (retourne une ActionListView signée)',
     description:
-      'Consumed by the filter form submit (FormView event-filter).',
+      'Consommé par le submit du formulaire de filtre (FormView event-filter).',
   })
   @ApiBody({ type: EventFilterDto })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (filtered ActionListView)',
+    description: 'Enveloppe Yeria signée (ActionListView filtrée)',
   })
   filterEvents(@Body() dto: EventFilterDto): Promise<SignedEnvelope> {
     return this.yeriaService.handleEventFilter(dto);
@@ -193,14 +234,14 @@ export class YeriaController {
   @UseGuards(YeriaAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Creates booking/order (Signed confirmation MessageView)',
+    summary: 'Crée la réservation/commande (MessageView de confirmation signée)',
     description:
-      'Consumed by the booking form submit (FormView event-booking).',
+      'Consommé par le submit du formulaire de réservation (FormView event-booking).',
   })
   @ApiBody({ type: CreateBookingDto })
   @ApiResponse({
     status: 200,
-    description: 'Signed Yeria envelope (confirmation MessageView)',
+    description: 'Enveloppe Yeria signée (MessageView de confirmation)',
   })
   bookTickets(
     @Body() dto: CreateBookingDto,
@@ -215,22 +256,22 @@ export class YeriaController {
 
   @Post('notifications')
   @ApiOperation({
-    summary: 'Sends a signed notification to a Yeria user',
+    summary: 'Envoie une notification signée à un utilisateur Yeria',
   })
   @ApiBody({
     schema: {
       type: 'object',
       required: ['userId', 'title', 'body'],
       properties: {
-        userId: { type: 'string', description: 'Yeria recipient ID' },
+        userId: { type: 'string', description: 'Identifiant Yeria du destinataire' },
         title: { type: 'string' },
         body: { type: 'string' },
-        link: { type: 'string', description: 'Optional link (e.g., /tickets/ABC)' },
+        link: { type: 'string', description: 'Lien optionnel (ex: /tickets/ABC)' },
       },
     },
   })
-  @ApiResponse({ status: 201, description: 'Notification sent' })
-  @ApiResponse({ status: 503, description: 'Yeria platform unreachable' })
+  @ApiResponse({ status: 201, description: 'Notification envoyée' })
+  @ApiResponse({ status: 503, description: 'Plateforme Yeria injoignable' })
   async sendNotification(
     @Body()
     body: {
@@ -246,6 +287,6 @@ export class YeriaController {
       body.body,
       body.link,
     );
-    return { message: 'Notification sent successfully' };
+    return { message: 'Notification envoyée avec succès' };
   }
 }
