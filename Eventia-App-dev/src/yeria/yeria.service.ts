@@ -773,8 +773,8 @@ export class YeriaService {
       const log = this.validationLogRepository.create({
         ticket,
         ticketId: ticket.id,
-        deviceId: dto.deviceId,
-        location: dto.location,
+        deviceId: dto.deviceId?.trim() || 'application-yeria',
+        location: dto.location?.trim() || '—',
         isSuccess: true,
       });
       await this.validationLogRepository.save(log);
