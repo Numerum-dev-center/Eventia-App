@@ -297,6 +297,8 @@ export class YeriaService {
     const event = await this.findEventById(eventId);
     const minPrice = this.minPrice(event.ticketsCategories);
 
+    const available = this.totalAvailable(event.ticketsCategories);
+
     const view = new CardView(YERIA_VIEW_ID.EVENT_DETAILS, event.title)
       .setSubtitle(
         [event.category, this.formatDate(event.startDate)]
@@ -308,8 +310,29 @@ export class YeriaService {
         'Date',
         `${new Date(event.startDate).toLocaleDateString('fr-FR')} → ${new Date(event.endDate).toLocaleDateString('fr-FR')}`,
       )
+      .addStat(
+        'Début',
+        this.formatDate(event.startDate),
+      )
+      .addStat('Fin', this.formatDate(event.endDate))
       .addStat('Lieu', [event.placeName, event.adress].filter(Boolean).join(', '))
-      .addStat('Prix', minPrice != null ? `${minPrice} FCFA` : '—');
+      .addStat('Prix', minPrice != null ? `${minPrice} FCFA` : '—')
+      .addStat(
+        'Places disponibles',
+        available != null ? `${available}` : '—',
+      );
+
+    if (event.ticketsCategories?.length) {
+      view.addSection(
+        'Billets',
+        event.ticketsCategories
+          .map(
+            (c) =>
+              `${c.name} — ${Number(c.price)} FCFA (${c.availableQuantity} places restantes)`,
+          )
+          .join('\n'),
+      );
+    }
 
     if (event.description) {
       view.addSection('À propos', event.description);
@@ -820,6 +843,15 @@ export class YeriaService {
       .map((c) => Number(c.price))
       .filter((p) => !Number.isNaN(p));
     return prices.length ? Math.min(...prices) : null;
+  }
+
+  private totalAvailable(
+    categories: TicketCategory[] | undefined,
+  ): number | null {
+    const values = (categories ?? [])
+      .map((c) => Number(c.availableQuantity))
+      .filter((n) => !Number.isNaN(n));
+    return values.length ? values.reduce((a, b) => a + b, 0) : null;
   }
 
   private async distinctEventCategories(): Promise<string[]> {
