@@ -230,6 +230,51 @@ export class YeriaController {
     return this.yeriaService.handleEventFilter(dto);
   }
 
+  // Formulaires Yeria : le client soumet à l'URL EXACTE qui a renvoyé la vue
+  // (convention FormView/QRScanView de la doc Yeria : « le client poste vers
+  // {service.baseUrl}/{URL de la vue} »). On expose donc un handler POST sur la
+  // même URL que la servo de chaque formulaire, en plus des anciennes routes
+  // POST séparées conservées pour la rétro-compatibilité.
+
+  @Post('views/events/:id/book')
+  @UseGuards(YeriaAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Soumets la réservation (URL conforme à la vue du formulaire)',
+    description:
+      'Le client Yeria soumet le formulaire de réservation à la même URL qui a servi la vue (views/events/:id/book). Délègue au même handler que POST event-booking.',
+  })
+  @ApiParam({ name: 'id', description: 'Identifiant de l\u2019événement' })
+  @ApiBody({ type: CreateBookingDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Enveloppe Yeria signée (MessageView de confirmation)',
+  })
+  bookTicketsFromView(
+    @Param('id') id: string,
+    @Body() dto: CreateBookingDto,
+    @GetYeriaUser() yeriaUser?: YeriaTokenClaims,
+  ): Promise<SignedEnvelope> {
+    return this.yeriaService.handleBooking(dto, yeriaUser);
+  }
+
+  @Post('views/events/filter')
+  @UseGuards(YeriaAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Applique le filtre (URL conforme à la vue du formulaire)',
+    description:
+      'Le client Yeria soumet le formulaire de filtre à la même URL qui a servi la vue (views/events/filter). Délègue au même handler que POST events/filter.',
+  })
+  @ApiBody({ type: EventFilterDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Enveloppe Yeria signée (ActionListView filtrée)',
+  })
+  filterEventsFromView(@Body() dto: EventFilterDto): Promise<SignedEnvelope> {
+    return this.yeriaService.handleEventFilter(dto);
+  }
+
   @Post('event-booking')
   @UseGuards(YeriaAuthGuard)
   @ApiBearerAuth()
