@@ -342,7 +342,7 @@ export class YeriaService {
     }
 
     view.addAction(
-      'book',
+      'Acheter le billet',
       'POST',
       {
         variant: 'primary',
@@ -353,7 +353,7 @@ export class YeriaService {
 
     if (event.longitude != null && event.latitude != null) {
       view.addAction(
-        'map',
+        'Voir la carte',
         'GET',
         {
           icon: 'map',
