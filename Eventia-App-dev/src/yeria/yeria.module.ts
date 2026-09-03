@@ -35,7 +35,7 @@ import { YeriaController } from './yeria.controller';
             config.get<string>('YERIA_PRIVATE_KEY'),
           ),
           publicKey: normalizePem(config.get<string>('YERIA_PUBLIC_KEY')),
-          baseUrl: 'https://yeria.app',
+          baseUrl: config.get<string>('YERIA_BASE_URL') ?? 'https://yeria.app',
         }),
     },
     YeriaService,
